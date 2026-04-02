@@ -12,7 +12,7 @@ modules:
   - type: files
     files:
       - source: system/etc/vscode
-        destination: /etc/vscode
+        destination: /usr/share/code
   - type: script
     scripts:
       - install-devcontainers-extension.sh
