@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: dnf
+    repos:
+      files:
+        - https://packages.microsoft.com/yumrepos/vscode
+    install:
+      packages:
+        - code
+  - type: files
+    files:
+      - source: system/etc/vscode
+        destination: /etc/vscode
+  - type: script
+    scripts:
+      - install-devcontainers-extension.sh
