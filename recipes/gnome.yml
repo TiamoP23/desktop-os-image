@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+
+modules:
+  - type: gnome-extensions
+    install:
+      - Dash to Panel
+  - type: dnf
+    install:
+      packages:
+        - hydrapaper
