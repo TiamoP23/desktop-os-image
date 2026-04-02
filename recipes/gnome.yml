@@ -5,7 +5,6 @@ modules:
   - type: gnome-extensions
     install:
       - Dash to Panel
-      - Blur my Shell
   - type: dnf
     install:
       packages:
