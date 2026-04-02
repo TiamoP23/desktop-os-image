@@ -5,6 +5,7 @@ modules:
   - type: default-flatpaks
     configurations:
       - scope: system
+        notify: false
         install:
           - io.podman_desktop.PodmanDesktop
   - type: dnf
