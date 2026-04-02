@@ -9,3 +9,9 @@ modules:
     install:
       packages:
         - hydrapaper
+  - type: containerfile
+    snippets:
+      - |
+        RUN \
+          --mount=from=build-blur-my-shell,source=/blur-my-shell/build/blur-my-shell@aunetx.shell-extension.zip,target=/tmp/blur-my-shell.zip \
+          gnome-extensions install -f /tmp/blur-my-shell.zip
