@@ -14,20 +14,8 @@ stages:
         install:
           packages:
             - make
-  - name: build-blur-my-shell
-    from: build-base
-    modules:
-      - type: git
-        source: local
-        repo: https://github.com/aunetx/blur-my-shell.git
-        branch: v71
-        dest: /blur-my-shell
-      - type: script
-        snippets:
-          - cd /blur-my-shell && make install
 
 modules:
-  - from-file: gnome.yml
-  - from-file: podman.yml
-  - from-file: vscode.yml
+  - from-file: desktop/recipe.yml
+  - from-file: dx/recipe.yml
   - type: signing # this sets up the proper policy & signing files for signed images to work fully

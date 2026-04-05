@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/stage-list-v1.json
+
+stages:
+  - name: build-blur-my-shell
+    from: build-base
+    modules:
+      - type: git
+        source: local
+        repo: https://github.com/TiamoP23/blur-my-shell.git
+        branch: master
+        dest: /blur-my-shell
+      - type: script
+        snippets:
+          - cd /blur-my-shell && make install
