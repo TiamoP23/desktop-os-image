@@ -2,17 +2,28 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 
 modules:
-  - type: gnome-extensions
-    install:
-      - Dash to Panel
   - type: dnf
     install:
       packages:
         - hydrapaper
   - type: containerfile
     snippets:
+      # Install Dash to Panel
       - |
-        RUN \
-          --mount=from=build-blur-my-shell,source=/blur-my-shell/build/blur-my-shell@aunetx.shell-extension.zip,target=/tmp/blur-my-shell.zip \
+        RUN --mount=from=build-dash-to-panel,source=/dash-to-panel/_build,target=/tmp/dash-to-panel \
+          rm -rf /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com && \
+          mkdir -p /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com && \
+          cp -r /tmp/dash-to-panel/. /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/
+      # Install Blur My Shell
+      - |
+        RUN --mount=from=build-blur-my-shell,source=/blur-my-shell/build/blur-my-shell@aunetx.shell-extension.zip,target=/tmp/blur-my-shell.zip \
+          rm -rf /usr/share/gnome-shell/extensions/blur-my-shell@aunetx && \
           unzip -o /tmp/blur-my-shell.zip -d /usr/share/gnome-shell/extensions/blur-my-shell@aunetx && \
           glib-compile-schemas /usr/share/gnome-shell/extensions/blur-my-shell@aunetx/schemas
+      # Install Clipboard Indicator
+      - |
+        RUN --mount=from=build-clipboard-indicator,source=/clipboard-indicator/bundle.zip,target=/tmp/clipboard-indicator.zip \
+          rm -rf /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
+          mkdir -p /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
+          unzip -o /tmp/clipboard-indicator.zip -d /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
+          glib-compile-schemas /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com/schemas
