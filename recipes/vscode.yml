@@ -11,8 +11,8 @@ modules:
         - code
   - type: files
     files:
-      - source: system/etc/vscode
-        destination: /usr/share/code
+      - source: system/etc/skel
+        destination: /etc/skel
   - type: script
     scripts:
       - install-devcontainers-extension.sh
