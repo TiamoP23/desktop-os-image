@@ -1,0 +1,8 @@
+{
+    "id": "podman",
+    "version": "1.0.0",
+    "name": "Podman (via apt)",
+    "documentationURL": "https://podman.io/docs/installation#ubuntu",
+    "description": "Installs the Podman CLI from Ubuntu apt repositories and configures access to the host Podman socket for non-root users via socat.",
+    "entrypoint": "/usr/local/share/podman-init.sh"
+}
