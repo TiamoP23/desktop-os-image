@@ -14,4 +14,5 @@ modules:
       - |
         RUN \
           --mount=from=build-blur-my-shell,source=/blur-my-shell/build/blur-my-shell@aunetx.shell-extension.zip,target=/tmp/blur-my-shell.zip \
-          gnome-extensions install -f /tmp/blur-my-shell.zip
+          unzip -o /tmp/blur-my-shell.zip -d /usr/share/gnome-shell/extensions/blur-my-shell@aunetx && \
+          glib-compile-schemas /usr/share/gnome-shell/extensions/blur-my-shell@aunetx/schemas
