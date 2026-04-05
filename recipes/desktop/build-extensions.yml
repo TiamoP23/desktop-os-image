@@ -30,7 +30,7 @@ stages:
       - type: git
         source: local
         repo: https://github.com/TiamoP23/gnome-shell-extension-clipboard-indicator.git
-        branch: master
+        branch: copilot/show-clipboard-dialog
         dest: /clipboard-indicator
       - type: script
         snippets:
