@@ -6,8 +6,15 @@ modules:
     install:
       packages:
         - hydrapaper
+  - type: files
+    files:
+      - source: system/etc/dconf
+        destination: /etc/dconf
   - type: containerfile
     snippets:
+      # Compile system dconf defaults
+      - |
+        RUN dconf update
       # Install Dash to Panel
       - |
         RUN --mount=from=build-dash-to-panel,source=/dash-to-panel/_build,target=/tmp/dash-to-panel \
