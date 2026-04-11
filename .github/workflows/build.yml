@@ -10,6 +10,15 @@ on:
 
   pull_request:
   workflow_dispatch: # allow manually triggering builds
+
+env:
+  ARCH: x86_64
+  IMAGE_NAME: desktop-os-image
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}
+  IMAGE_TAG: latest
+  VERSION: "44"
+  VARIANT: Silverblue
+
 concurrency:
   # only run one build at a time
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -40,3 +49,35 @@ jobs:
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true
+
+  build-iso:
+    name: Build Installer ISO
+    needs: bluebuild
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Build ISO
+        id: build
+        uses: jasonn3/build-container-installer@main
+        with:
+          arch: ${{ env.ARCH }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_repo: ${{ env.IMAGE_REPO }}
+          image_tag: ${{ env.IMAGE_TAG }}
+          version: ${{ env.VERSION }}
+          variant: ${{ env.VARIANT }}
+          iso_name: ${{ env.IMAGE_NAME }}-${{ env.IMAGE_TAG }}-${{ env.VERSION }}.iso
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.iso_name }}
+          path: |
+            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}
+            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
