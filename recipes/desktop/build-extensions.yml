@@ -8,7 +8,7 @@ stages:
       - type: git
         source: local
         repo: https://github.com/TiamoP23/dash-to-panel.git
-        branch: copilot/check-taskbar-hidden-overview
+        branch: copilot/fix-hide-overview-on-startup
         dest: /dash-to-panel
       - type: script
         snippets:
@@ -19,7 +19,7 @@ stages:
       - type: git
         source: local
         repo: https://github.com/TiamoP23/blur-my-shell.git
-        branch: master
+        branch: copilot/fix-panel-blur-background-height
         dest: /blur-my-shell
       - type: script
         snippets:
