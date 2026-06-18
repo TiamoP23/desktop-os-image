@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+modules:
+  - type: dnf
+    install:
+      packages:
+        - hydrapaper
+  - type: files
+    files:
+      - source: static/system/etc/dconf
+        destination: /etc/dconf
+      - source: static/system/usr/share/doc/blur-my-shell
+        destination: /usr/share/doc/blur-my-shell
+      - source: generated/usr/share/gnome-shell/extensions
+        destination: /usr/share/gnome-shell/extensions
+      - source: static/scripts/rounded_blur_build.sh
+        destination: /usr/local/bin/rounded_blur_build.sh
+  - type: containerfile
+    snippets:
+      - RUN chmod +x /usr/local/bin/rounded_blur_build.sh
+      - RUN dconf update
