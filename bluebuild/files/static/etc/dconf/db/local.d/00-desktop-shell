@@ -1,6 +1,6 @@
 [org/gnome/shell]
 disable-user-extensions=false
-enabled-extensions=['dash-to-panel@jderose9.github.com', 'blur-my-shell@aunetx', 'clipboard-indicator@tudmotu.com']
+enabled-extensions=['dash-to-panel@jderose9.github.com', 'blur-my-shell@aunetx', 'clipboard-indicator@tudmotu.com', 'CoverflowAltTab@palatis.blogspot.com']
 favorite-apps=['org.gnome.Nautilus.desktop', 'firefox.desktop', 'org.gnome.Software.desktop', 'org.gnome.Console.desktop']
 
 [org/gnome/desktop/interface]

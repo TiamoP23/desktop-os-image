@@ -1,0 +1,58 @@
+From ba9bbb42ac93a6819298591b5aaec79248dbcdd8 Mon Sep 17 00:00:00 2001
+From: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date: Fri, 11 Apr 2026 10:46:13 +0000
+Subject: [PATCH] fix: use panel_box dimensions for blur sizing to fix DTP panel height
+
+diff --git a/src/components/panel.js b/src/components/panel.js
+index b3d9155..54f66f4 100644
+--- a/src/components/panel.js
++++ b/src/components/panel.js
+@@ -212,6 +212,14 @@ export const PanelBlur = class PanelBlur {
+         // update the size of the actor
+         this.update_size(actors);
+ 
++        // schedule a deferred size update to handle cases where the panel_box
++        // dimensions are not yet final (e.g. Dash to Panel initialization)
++        GLib.idle_add(GLib.PRIORITY_LOW, () => {
++            if (this.actors_list.includes(actors))
++                this.update_size(actors);
++            return GLib.SOURCE_REMOVE;
++        });
++
+         // connect to panel, panel_box and its parent position or size change
+         // this should fire update_size every time one of its params change
+         this.connections.connect(
+@@ -255,17 +263,21 @@ export const PanelBlur = class PanelBlur {
+             // positionned yet)
+             let [p_x, p_y] = panel_box.get_position();
+             let [p_p_x, p_p_y] = panel_box.get_parent().get_position();
+-            let x = p_x + p_p_x - monitor.x + (width - panel.width) / 2;
+-            let y = p_y + p_p_y - monitor.y + (height - panel.height) / 2;
+-
+-            background.set_clip(x, y, panel.width, panel.height);
+-            background.x = (width - panel.width) / 2 - x;
+-            background.y = .5 + (height - panel.height) / 2 - y;
++            let x = p_x + p_p_x - monitor.x;
++            let y = p_y + p_p_y - monitor.y;
++
++            // use panel_box dimensions for the clip to cover the full visible
++            // panel area (including when Dash to Panel sets a larger panel)
++            background.set_clip(x, y, width, height);
++            background.x = -x;
++            background.y = .5 - y;
+         } else {
+-            background.x = panel.x;
+-            background.y = panel.y;
+-            background.width = panel.width;
+-            background.height = panel.height;
++            // use panel_box dimensions so the blur covers the full visible
++            // panel area, not just the inner panel widget
++            background.x = 0;
++            background.y = 0;
++            background.width = width;
++            background.height = height;
+         }
+ 
+         // update the monitor panel is on
+-- 
+2.47.0

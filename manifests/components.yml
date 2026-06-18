@@ -1,0 +1,21 @@
+components:
+  - id: dash-to-panel
+    type: gnome-extension
+    repo: https://github.com/home-sweet-gnome/dash-to-panel.git
+    ref: a78d8d4f00d9d5bfc813c48f59d8adc81657c9a6
+    install_dir: usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com
+  - id: blur-my-shell
+    type: gnome-extension
+    repo: https://github.com/aunetx/blur-my-shell.git
+    ref: b7a057ccbb6c42f8ad4386cd1fff1caffc56d124
+    install_dir: usr/share/gnome-shell/extensions/blur-my-shell@aunetx
+  - id: coverflow-alt-tab
+    type: gnome-extension
+    repo: https://github.com/TiamoP23/CoverflowAltTab.git
+    ref: 0193bea38ba48b7956e4c74af839624453f33f2a
+    install_dir: usr/share/gnome-shell/extensions/CoverflowAltTab@palatis.blogspot.com
+  - id: clipboard-indicator
+    type: gnome-extension
+    repo: https://github.com/Tudmotu/gnome-shell-extension-clipboard-indicator.git
+    ref: b2055249843d404e50ab27b459b1ebd930884406
+    install_dir: usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com
