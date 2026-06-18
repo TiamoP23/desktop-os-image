@@ -13,7 +13,12 @@ run_git_in_repo() {
   # break commands executed against nested repositories (submodules). Run each
   # nested-repo command in a clean Git env.
   (
-    unset $(git rev-parse --local-env-vars)
+    local git_env_vars=""
+    git_env_vars="$(git rev-parse --local-env-vars 2>/dev/null || true)"
+    if [[ -n "$git_env_vars" ]]; then
+      # shellcheck disable=SC2086
+      unset $git_env_vars
+    fi
     git -C "$repo_path" "$@"
   )
 }

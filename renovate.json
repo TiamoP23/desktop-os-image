@@ -15,7 +15,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^bluebuild\\/recipes\\/.*\\.ya?ml$/"],
+      "managerFilePatterns": ["^bluebuild\\/recipes\\/.*\\.ya?ml$"],
       "matchStringsStrategy": "combination",
       "matchStrings": [
         "base-image:\\s+(?<depName>\\S+)",
