@@ -30,6 +30,7 @@ The repository tracks upstream sources under `vendor/extensions/` and applies lo
 
 Use the `justfile` entrypoints:
 
+- Install the host-side prepare prerequisites first: `git`, `gettext`, `glib-compile-schemas`, `gnome-extensions`, `zip`, and `unzip`.
 - `just setup` installs the git hook, syncs submodules, and prepares the generated tree.
 - `just prepare [component]` rerenders all components or a single component.
 - `just component-edit <component>` starts an edit session against a vendored component.

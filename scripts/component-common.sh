@@ -324,6 +324,13 @@ apply_patches_to_repo() {
   local component_name="$3"
   local patch_file=""
   local patch_commit_oid=""
+  local -a git_am_env=(
+    env
+    GIT_AUTHOR_NAME=Copilot
+    GIT_AUTHOR_EMAIL=copilot@users.noreply.github.com
+    GIT_COMMITTER_NAME=Copilot
+    GIT_COMMITTER_EMAIL=copilot@users.noreply.github.com
+  )
 
   if [[ ! -d "$patches_dir" ]]; then
     return 0
@@ -335,7 +342,7 @@ apply_patches_to_repo() {
       continue
     fi
 
-    if ! git -C "$repo_path" am --3way "$patch_file" >/dev/null; then
+    if ! "${git_am_env[@]}" git -C "$repo_path" am --3way "$patch_file" >/dev/null; then
       git -C "$repo_path" am --abort >/dev/null 2>&1 || true
       fail "Failed to apply patch for $component_name: $(basename "$patch_file"). The vendor checkout may already include those commits, or the patch queue no longer matches the pinned base."
       return 1

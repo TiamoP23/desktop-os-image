@@ -28,6 +28,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install prepare dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext libglib2.0-bin gnome-shell zip unzip
+
       - name: Prepare generated tree
         run: bash ./scripts/prepare-components.sh
 
