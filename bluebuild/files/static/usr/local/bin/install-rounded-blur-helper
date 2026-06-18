@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-exec /usr/share/blur-my-shell/scripts/rounded_blur_build.sh "$@"

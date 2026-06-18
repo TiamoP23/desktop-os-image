@@ -1,55 +1,12 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-name: desktop-os-image
-description: Personal Bazzite 44 GNOME image with custom GNOME Shell extensions.
-base-image: ghcr.io/ublue-os/bazzite-gnome
+name: desktop-os
+description: Custom desktop image scaffold built with BlueBuild.
+base-image: ghcr.io/ublue-os/silverblue-nvidia
 image-version: 44
 
 modules:
-  - type: dnf
-    install:
-      packages:
-        - hydrapaper
-        - make
-        - zip
-        - unzip
-        - gettext
-  - type: files
-    files:
-      - source: static
-        destination: /
-      - source: generated
-        destination: /
-  - type: containerfile
-    snippets:
-      - |
-        RUN dconf update
-      - |
-        RUN cd /components/dash-to-panel && \
-          make _build && \
-          rm -rf /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com && \
-          mkdir -p /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com && \
-          cp -a /components/dash-to-panel/_build/. /usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/
-      - |
-        RUN cd /components/blur-my-shell && \
-          make build && \
-          rm -rf /usr/share/gnome-shell/extensions/blur-my-shell@aunetx && \
-          unzip -o build/blur-my-shell@aunetx.shell-extension.zip -d /usr/share/gnome-shell/extensions/blur-my-shell@aunetx && \
-          glib-compile-schemas /usr/share/gnome-shell/extensions/blur-my-shell@aunetx/schemas
-      - |
-        RUN cd /components/coverflow-alt-tab && \
-          make build && \
-          rm -rf /usr/share/gnome-shell/extensions/CoverflowAltTab@palatis.blogspot.com && \
-          mkdir -p /usr/share/gnome-shell/extensions/CoverflowAltTab@palatis.blogspot.com && \
-          unzip -o build/CoverflowAltTab@palatis.blogspot.com.shell-extension.zip -d /usr/share/gnome-shell/extensions/CoverflowAltTab@palatis.blogspot.com && \
-          glib-compile-schemas /usr/share/gnome-shell/extensions/CoverflowAltTab@palatis.blogspot.com/schemas || true
-      - |
-        RUN cd /components/clipboard-indicator && \
-          make bundle && \
-          rm -rf /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
-          mkdir -p /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
-          unzip -o bundle.zip -d /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com && \
-          glib-compile-schemas /usr/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com/schemas
-      - |
-        RUN rm -rf /components
+  - from-file: desktop.yml
+  - from-file: apps.yml
+  - from-file: dx.yml
   - type: signing

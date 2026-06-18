@@ -1,4 +1,0 @@
-{
-  "dev.containers.dockerPath": "podman",
-  "dev.containers.dockerComposePath": "/usr/bin/podman-compose"
-}

@@ -11,10 +11,11 @@ on:
       - "manifests/**"
       - "patches/**"
       - "scripts/**"
+      - "vendor/**"
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: desktop-os-image
+  IMAGE_NAME: desktop-os
   IMAGE_REPO: ghcr.io/${{ github.repository_owner }}
   IMAGE_TAG: latest
 
@@ -25,13 +26,15 @@ concurrency:
 jobs:
   publish:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          submodules: recursive
 
       - name: Prepare generated tree
         run: bash ./scripts/prepare-components.sh
@@ -41,7 +44,7 @@ jobs:
         with:
           working_directory: ./bluebuild
           skip_checkout: true
-          recipe: recipes/main.yml
+          recipe: main.yml
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
