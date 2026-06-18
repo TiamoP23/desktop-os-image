@@ -1,42 +1,48 @@
-# desktop-os-image &nbsp; [![bluebuild build badge](https://github.com/tiamop23/desktop-os-image/actions/workflows/build.yml/badge.svg)](https://github.com/tiamop23/desktop-os-image/actions/workflows/build.yml)
+# desktop-os-image
 
-See the [BlueBuild docs](https://blue-build.org/how-to/setup/) for quick setup instructions for setting up your own repository based on this template.
+Manifest-driven BlueBuild repository for a personal Bazzite GNOME 44 image.
 
-After setup, it is recommended you update this README to describe your custom image.
+## Layout
 
-## Installation
+- `bluebuild/` contains the BlueBuild recipe tree and image filesystem inputs.
+- `.github/workflows/` contains CI validation and image publish workflows.
+- `.githooks/` stores the versioned Git hooks that `just setup` installs.
+- `.work/` is transient local state used by render and component edit helpers.
+- `vendor/` is reserved for upstream Git submodules.
+- `patches/` stores local patch queues for vendored components.
+- `manifests/components.yml` is the source of truth for rendered components.
+- `scripts/` contains deterministic local and CI helpers.
 
-> [!WARNING]  
-> [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
+## Image base
 
-To rebase an existing atomic Fedora installation to the latest build:
+The image builds from `ghcr.io/ublue-os/bazzite-gnome:44` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
 
-- First rebase to the unsigned image, to get the proper signing keys and policies installed:
-  ```
-  rpm-ostree rebase ostree-unverified-registry:ghcr.io/tiamop23/desktop-os-image:latest
-  ```
-- Reboot to complete the rebase:
-  ```
-  systemctl reboot
-  ```
-- Then rebase to the signed image, like so:
-  ```
-  rpm-ostree rebase ostree-image-signed:docker://ghcr.io/tiamop23/desktop-os-image:latest
-  ```
-- Reboot again to complete the installation
-  ```
-  systemctl reboot
-  ```
+## Included extensions
 
-The `latest` tag will automatically point to the latest build. That build will still always use the Fedora version specified in `recipe.yml`, so you won't get accidentally updated to the next major version.
+- Dash to Panel
+- Blur My Shell
+- Coverflow Alt-Tab
+- Clipboard Indicator
 
-## ISO
+The repository tracks upstream sources under `vendor/extensions/` and applies local patch queues from `patches/extensions/` before rendering them into `bluebuild/files/generated/`.
 
-If build on Fedora Atomic, you can generate an offline ISO with the instructions available [here](https://blue-build.org/how-to/generate-iso/#_top). These ISOs cannot unfortunately be distributed on GitHub for free due to large sizes, so for public projects something else has to be used for hosting.
+## Local workflow
+
+Use the `justfile` entrypoints:
+
+- `just setup` installs the git hook, syncs submodules, and prepares the generated tree.
+- `just prepare [component]` rerenders all components or a single component.
+- `just component-edit <component>` starts an edit session against a vendored component.
+- `just component-finish <component>` exports the patch queue and rerenders that component.
+- `just build` and `just switch` defer to the local BlueBuild CLI.
+
+## Blur My Shell rounded blur helper
+
+The upstream Blur My Shell guide is installed at `/usr/share/doc/blur-my-shell/GUIDE.md`, and the helper script is installed as `/usr/local/bin/rounded_blur_build.sh`.
 
 ## Verification
 
-These images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). You can verify the signature by downloading the `cosign.pub` file from this repo and running the following command:
+These images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). You can verify the signature by downloading `cosign.pub` from this repo and running:
 
 ```bash
 cosign verify --key cosign.pub ghcr.io/tiamop23/desktop-os-image

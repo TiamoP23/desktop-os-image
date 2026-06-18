@@ -1,6 +1,5 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
-
 modules:
   - type: default-flatpaks
     configurations:
@@ -18,8 +17,10 @@ modules:
         - code
   - type: files
     files:
-      - source: system/etc/skel
+      - source: static/system/etc/skel
         destination: /etc/skel
-  - type: script
-    scripts:
-      - install-devcontainers-extension.sh
+      - source: static/scripts/install-devcontainers-extension.sh
+        destination: /usr/local/bin/install-devcontainers-extension.sh
+  - type: containerfile
+    snippets:
+      - RUN chmod +x /usr/local/bin/install-devcontainers-extension.sh /usr/local/bin/rounded_blur_build.sh && /usr/local/bin/install-devcontainers-extension.sh && rm -f /usr/local/bin/install-devcontainers-extension.sh

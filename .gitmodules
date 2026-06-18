@@ -1,0 +1,16 @@
+[submodule "vendor/extensions/dash-to-panel"]
+path = vendor/extensions/dash-to-panel
+url = https://github.com/home-sweet-gnome/dash-to-panel.git
+branch = master
+[submodule "vendor/extensions/blur-my-shell"]
+path = vendor/extensions/blur-my-shell
+url = https://github.com/aunetx/blur-my-shell.git
+branch = master
+[submodule "vendor/extensions/clipboard-indicator"]
+path = vendor/extensions/clipboard-indicator
+url = https://github.com/Tudmotu/gnome-shell-extension-clipboard-indicator.git
+branch = master
+[submodule "vendor/extensions/coverflow-alt-tab"]
+path = vendor/extensions/coverflow-alt-tab
+url = https://github.com/dsheeler/CoverflowAltTab.git
+branch = main

@@ -1,4 +1,13 @@
+.work/
+bluebuild/files/generated/*
+!bluebuild/files/generated/.gitignore
+
 cosign.key
 cosign.private
 /Containerfile
+/bluebuild/Containerfile
 /.bluebuild-scripts_*
+
+# Common editor and OS noise
+.DS_Store
+Thumbs.db
