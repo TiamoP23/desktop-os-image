@@ -19,7 +19,7 @@
       "matchStringsStrategy": "combination",
       "matchStrings": [
         "base-image:\\s+(?<depName>\\S+)",
-        "image-version:\\s+(?<currentValue>\\S+)"
+        "image-version:\\s+\"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
