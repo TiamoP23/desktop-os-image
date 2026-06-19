@@ -15,7 +15,7 @@ Manifest-driven BlueBuild repository for a personal Bazzite GNOME 44 image.
 
 ## Image base
 
-The image builds from `ghcr.io/ublue-os/bazzite-gnome:44` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
+The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:44` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
 
 ## Included extensions
 
