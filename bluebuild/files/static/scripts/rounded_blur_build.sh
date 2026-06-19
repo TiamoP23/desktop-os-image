@@ -93,6 +93,8 @@ install_lib(){
 	meson install -C build --destdir "$dest_dir"
 	sudo cp -rf ./build/binary/usr/local/* /usr/
 	
+	cleanup_stage
+	
 	echo "--------------------------------------------------------"
 	echo "For the changes to apply, please log out and then log back in."
 	echo "--------------------------------------------------------"
@@ -125,6 +127,7 @@ uninstall_lib(){
 
 prep_stage(){
 	REPO="https://github.com/kancko/gnome-rounded-blur"
+	REPO_REF="v1.0.1"
 	dest_dir="./binary"
 	build_dir="/tmp"
 	
@@ -141,12 +144,9 @@ prep_stage(){
 	# Remove current working dir if found
 	if [ -d "gnome-rounded-blur" ]; then
 		rm -rf gnome-rounded-blur
-		git clone $REPO
-		cd gnome-rounded-blur;
-	else
-		git clone $REPO
-		cd gnome-rounded-blur;
 	fi
+	git clone --depth 1 --branch "$REPO_REF" "$REPO"
+	cd gnome-rounded-blur
 	
 	# Get mutter version
 	MUTTER_SYS_VER=$(mutter --version | grep -o -P '(?<=mutter ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g')
@@ -166,6 +166,13 @@ prep_stage(){
 	fi
 	
 	install_dep;
+}
+
+cleanup_stage(){
+	echo "--------------------------------------------------------"
+	echo "Cleaning up build workspace"
+	echo "--------------------------------------------------------"
+	rm -rf /tmp/gnome-rounded-blur
 }
 
 help_doc(){
@@ -232,9 +239,11 @@ while true; do
     esac
 done
 
-# No positional arguments are required for the install, uninstall, or help flows.
+# handle non-option arguments
 if [[ $# -ne 0 ]]; then
     echo "$0: no positional arguments are supported."
 	help_doc
     exit 4
 fi
+
+# echo "all: $A, kernel: $k, gnome-shell: $g"
