@@ -19,3 +19,4 @@ modules:
     snippets:
       - RUN chmod +x /usr/local/bin/rounded_blur_build.sh
       - RUN dconf update
+      - RUN /usr/local/bin/rounded_blur_build.sh -i
