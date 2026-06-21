@@ -19,6 +19,6 @@ modules:
     snippets:
       - RUN chmod +x /usr/local/bin/rounded_blur_build.sh
       - RUN dconf update
-      - RUN dnf -y install --disableexcludes=all git meson gcc pkgconf-pkg-config glib2-devel gobject-introspection-devel mutter-devel
+      - RUN dnf --setopt=disable_excludes=* -y install git meson gcc pkgconf-pkg-config glib2-devel gobject-introspection-devel mutter-devel
       - RUN SKIP_DEPS=y /usr/local/bin/rounded_blur_build.sh -i
-      - RUN dnf -y remove --disableexcludes=all git meson gcc pkgconf-pkg-config glib2-devel gobject-introspection-devel mutter-devel && dnf -y clean all
+      - RUN dnf --setopt=disable_excludes=* -y remove git meson gcc pkgconf-pkg-config glib2-devel gobject-introspection-devel mutter-devel && dnf -y clean all
