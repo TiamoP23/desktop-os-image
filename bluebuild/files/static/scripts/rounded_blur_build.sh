@@ -266,19 +266,16 @@ while true; do
             i=y
             install_lib
             shift
-            break
             ;;
 		-u|--uninstall)
 			u=y
             uninstall_lib
             shift
-            break
             ;;
 		-h|--help)
 			h=y
             help_doc
             shift
-            break
             ;;
         --)
             shift
