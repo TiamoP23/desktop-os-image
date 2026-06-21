@@ -195,7 +195,7 @@ set -o errexit -o pipefail -o noclobber -o nounset
 # ignore errexit with `&& true`
 getopt --test > /dev/null && true
 if [[ $? -ne 4 ]]; then
-    echo 'I'm sorry, `getopt --test` failed in this environment.'
+    echo "I'm sorry, \`getopt --test\` failed in this environment."
     exit 1
 fi
 
