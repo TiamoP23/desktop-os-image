@@ -8,7 +8,7 @@ check_env(){
 		if [[ $i = "y" ]] && [[ $u = "n" ]]; then		
 			echo "--------------------------------------------------------"
 			echo "Please do not use this script to install gnome-rounded-blur on Arch Linux"
-			echo "To install this library on Arch, please do so via the AUR"
+			echo "To install this library on Arch, please use the AUR"
 			echo "https://aur.archlinux.org/packages/gnome-rounded-blur"
 			echo "--------------------------------------------------------"
 		elif [[ $i = "n" ]] && [[ $u = "y" ]]; then	
@@ -165,14 +165,17 @@ prep_stage(){
 		sed -i -e '0,/'"mutter_api_version = ""$MUTTER_API_REPO_VER"'/{s/'"$MUTTER_API_REPO_VER"'/'"$DIFF_VALUE_2"'/g}' meson.build
 	fi
 	
-	install_dep;
+	if [[ "${SKIP_DEPS:-n}" != "y" ]]; then
+		install_dep;
+	fi
 }
 
 cleanup_stage(){
 	echo "--------------------------------------------------------"
 	echo "Cleaning up build workspace"
 	echo "--------------------------------------------------------"
-	rm -rf /tmp/gnome-rounded-blur
+	cd "$build_dir"
+	rm -rf "$build_dir/gnome-rounded-blur"
 }
 
 help_doc(){
@@ -191,7 +194,7 @@ set -o errexit -o pipefail -o noclobber -o nounset
 # ignore errexit with `&& true`
 getopt --test > /dev/null && true
 if [[ $? -ne 4 ]]; then
-    echo 'I’m sorry, `getopt --test` failed in this environment.'
+    echo 'I'm sorry, `getopt --test` failed in this environment.'
     exit 1
 fi
 
@@ -199,11 +202,11 @@ LONGOPTS=install,uninstall,help
 OPTIONS=iuh
 
 # -temporarily store output to be able to check for errors
-# -activate quoting/enhanced mode (e.g. by writing out “--options”)
+# -activate quoting/enhanced mode (e.g. by writing out "--options")
 # -pass arguments only via   -- "$@"   to separate them correctly
 # -if getopt fails, it complains itself to stderr
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@") || exit 2
-# read getopt’s output this way to handle the quoting right:
+# read getopt's output this way to handle the quoting right:
 eval set -- "$PARSED"
 
 i=n u=n h=n
