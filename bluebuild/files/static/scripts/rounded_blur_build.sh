@@ -163,12 +163,21 @@ prep_stage(){
 		exit 1
 	fi
 
-	MUTTER_API_SYS_VER="$(pkg-config --list-package-names | sed -nE 's/^libmutter-([0-9]+)$/\1/p' | sort -n | tail -n1)"
-	if [[ -z "$MUTTER_API_SYS_VER" ]]; then
+	MUTTER_API_SYS_VER=""
+	for api_ver in 18 17 16 15 14 13 12 11 10; do
+		if pkg-config --exists "libmutter-${api_ver}" 2>/dev/null; then
+			MUTTER_API_SYS_VER="${api_ver}"
+			break
+		fi
+	done
+
+	if [[ -z "${MUTTER_API_SYS_VER}" ]]; then
 		echo "Could not find libmutter pkg-config metadata. Is mutter-devel installed?"
 		exit 1
 	fi
-	MUTTER_SYS_VER="$(pkg-config --modversion "libmutter-$MUTTER_API_SYS_VER" | sed -e 's/\..*//g')"
+
+	MUTTER_PC="libmutter-${MUTTER_API_SYS_VER}"
+	MUTTER_SYS_VER="$(pkg-config --modversion "${MUTTER_PC}")"
 	HARDCODE_MUTTER_SYS_VER=$(cat meson.build | grep -o -P '(?<=mutter_req = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g' -e 's/>//g' -e 's/=//g' -e 's/ //g')
 	MUTTER_API_REPO_VER=$(cat meson.build | grep -o -P '(?<=mutter_api_version = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/ //g')
 	
@@ -179,8 +188,9 @@ prep_stage(){
 	
 	# Edit meson.build to allow building
 	sed -i -E \
-		-e "s/^(mutter_api_version = ).*/\1'$MUTTER_API_SYS_VER'/" \
-		-e "s/^(mutter_req = ).*/\1'>= $MUTTER_SYS_VER'/" \
+		-e "s/^(mutter_api_version[[:space:]]*=[[:space:]]*)['\"][0-9]+['\"]/'${MUTTER_API_SYS_VER}'/" \
+		-e "s/^(mutter_req[[:space:]]*=[[:space:]]*)['\"][^'\"]+['\"]/'>= ${MUTTER_SYS_VER}'/" \
+		-e "s/dependency\(['\"]libmutter-[0-9]+['\"]\)/dependency('libmutter-${MUTTER_API_SYS_VER}')/g" \
 		meson.build
 	
 	if [[ "${SKIP_DEPS:-n}" != "y" ]]; then
