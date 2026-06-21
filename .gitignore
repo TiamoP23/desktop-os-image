@@ -1,4 +1,7 @@
 .work/
+.superpowers/
+.playwright-mcp/
+.vscode/
 bluebuild/files/generated/*
 !bluebuild/files/generated/.gitignore
 
