@@ -17,7 +17,12 @@ Optimize for the owner's daily desktop experience, maintainability, and reproduc
 - `vendor/` contains upstream submodules, mainly GNOME extensions.
 - `patches/` contains local patch queues for vendored components.
 - `scripts/` contains deterministic helper scripts for preparing generated components and managing patch workflows.
-- `docs/issues/` contains local tracking issue drafts and the overview used to resume future conversations.
+
+## Planning Context
+
+- The current desktop customization overview is tracked in issue #30: https://github.com/TiamoP23/desktop-os-image/issues/30
+- Create implementation PRs against the individual issues linked from that overview.
+- Create or update GitHub issues only after the owner approves the requirements.
 
 ## Working Guidelines
 
@@ -28,7 +33,6 @@ Optimize for the owner's daily desktop experience, maintainability, and reproduc
 - Keep host-used extensions as useful reference, not automatic image requirements.
 - Do not edit generated files under `bluebuild/files/generated/`; update manifests, vendored sources, patches, or static inputs instead.
 - If running inside Distrobox, use `distrobox-host-exec` to inspect host GNOME settings, extensions, Flatpaks, and other host-only tools.
-- Local issue drafts should be updated before creating GitHub issues. Create GitHub issues only after the owner approves the draft content.
 
 ## Host State Inspection
 
