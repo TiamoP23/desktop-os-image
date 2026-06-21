@@ -157,22 +157,31 @@ prep_stage(){
 	cd gnome-rounded-blur
 	git checkout "$REPO_COMMIT"
 	
-	# Get mutter version
-	MUTTER_SYS_VER=$(mutter --version | grep -o -P '(?<=mutter ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g')
+	# Get mutter version via pkg-config (container-build-safe)
+	if ! command -v pkg-config >/dev/null 2>&1; then
+		echo "pkg-config is required. Install pkgconf-pkg-config and mutter-devel."
+		exit 1
+	fi
+
+	MUTTER_API_SYS_VER="$(pkg-config --list-package-names | sed -nE 's/^libmutter-([0-9]+)$/\1/p' | sort -n | tail -n1)"
+	if [[ -z "$MUTTER_API_SYS_VER" ]]; then
+		echo "Could not find libmutter pkg-config metadata. Is mutter-devel installed?"
+		exit 1
+	fi
+	MUTTER_SYS_VER="$(pkg-config --modversion "libmutter-$MUTTER_API_SYS_VER" | sed -e 's/\..*//g')"
 	HARDCODE_MUTTER_SYS_VER=$(cat meson.build | grep -o -P '(?<=mutter_req = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g' -e 's/>//g' -e 's/=//g' -e 's/ //g')
 	MUTTER_API_REPO_VER=$(cat meson.build | grep -o -P '(?<=mutter_api_version = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/ //g')
 	
-	# Edit meson.build to allow builing
-	if [[ "$MUTTER_SYS_VER" -ge "$HARDCODE_MUTTER_SYS_VER" ]]; then
-		DIFF_VALUE=$(echo "$MUTTER_SYS_VER - $HARDCODE_MUTTER_SYS_VER" | bc)
-		DIFF_VALUE_2=$(echo "$MUTTER_API_REPO_VER + $DIFF_VALUE" | bc)
-		sed -i -e '0,/'"mutter_api_version = ""$MUTTER_API_REPO_VER"'/{s/'"$MUTTER_API_REPO_VER"'/'"$DIFF_VALUE_2"'/g}' meson.build
-	else
-		DIFF_VALUE=$(echo "$HARDCODE_MUTTER_SYS_VER - $MUTTER_SYS_VER" | bc)
-		DIFF_VALUE_2=$(echo "$MUTTER_API_REPO_VER - $DIFF_VALUE" | bc)
-		sed -i -e '0,/'"mutter_req = ""$HARDCODE_MUTTER_SYS_VER"'/{s/'"$HARDCODE_MUTTER_SYS_VER"'/'"$MUTTER_SYS_VER"'/g}' meson.build
-		sed -i -e '0,/'"mutter_api_version = ""$MUTTER_API_REPO_VER"'/{s/'"$MUTTER_API_REPO_VER"'/'"$DIFF_VALUE_2"'/g}' meson.build
-	fi
+	echo "Detected mutter API version: $MUTTER_API_SYS_VER"
+	echo "Detected mutter package version: $MUTTER_SYS_VER"
+	echo "Repo hardcoded mutter version: $HARDCODE_MUTTER_SYS_VER"
+	echo "Repo hardcoded API version: $MUTTER_API_REPO_VER"
+	
+	# Edit meson.build to allow building
+	sed -i -E \
+		-e "s/^(mutter_api_version = ).*/\1'$MUTTER_API_SYS_VER'/" \
+		-e "s/^(mutter_req = ).*/\1'>= $MUTTER_SYS_VER'/" \
+		meson.build
 	
 	if [[ "${SKIP_DEPS:-n}" != "y" ]]; then
 		install_dep;
