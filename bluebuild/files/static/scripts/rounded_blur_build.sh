@@ -190,7 +190,7 @@ prep_stage(){
 	if [[ -z "${MUTTER_API_SYS_VER}" ]]; then
 		echo "Could not find libmutter pkg-config metadata."
 		echo "On Fedora/Bazzite: is mutter-devel installed?"
-		echo "On Debian/Ubuntu: is libmutter-${MUTTER_API_SYS_VER}-dev installed?"
+		echo "On Debian/Ubuntu: is the versioned libmutter-XX-dev package installed?"
 		exit 1
 	fi
 
