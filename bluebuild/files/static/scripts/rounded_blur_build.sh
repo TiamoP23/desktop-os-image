@@ -1,5 +1,13 @@
 #!/bin/bash
 
+run_as_root(){
+	if [[ "$EUID" -eq 0 ]]; then
+		"$@"
+	else
+		sudo "$@"
+	fi
+}
+
 check_env(){
 	OS_ID_TYPE=$(cat /etc/os-release | grep -m 1 -o -P '(?<=ID=).*')
 	OS_LIKE_ID_TYPE=$(cat /etc/os-release | grep -m 1 -o -P '(?<=ID_LIKE=).*' || true)
@@ -30,12 +38,12 @@ install_git(){
 			echo "--------------------------------------------------------"
 			echo "Installing git"
 			echo "--------------------------------------------------------"
-			sudo apt -y install git 
+			run_as_root apt -y install git 
 		elif [[ "$OS_ID_TYPE" = "fedora" ]] || [[ "$OS_LIKE_ID_TYPE" = "fedora" ]]; then
 			echo "--------------------------------------------------------"
 			echo "Installing git"
 			echo "--------------------------------------------------------"
-			sudo dnf -y install git
+			run_as_root dnf -y install git
 		else
 			echo "--------------------------------------------------------"
 			echo "Please manually install git using your distro's package manager"
@@ -52,7 +60,7 @@ install_git(){
 			echo "--------------------------------------------------------"
 			echo "Installing mutter"
 			echo "--------------------------------------------------------"
-			sudo apt -y install mutter
+			run_as_root apt -y install mutter
 		fi
 	fi
 }
@@ -62,12 +70,12 @@ install_dep(){
 		echo "--------------------------------------------------------"
 		echo "Installing dependency"
 		echo "--------------------------------------------------------"
-		sudo apt -y install libglib2.0-dev build-essential libmutter-$DIFF_VALUE_2-dev gobject-introspection meson
+		run_as_root apt -y install libglib2.0-dev build-essential libmutter-$DIFF_VALUE_2-dev gobject-introspection meson
 	elif [[ "$OS_ID_TYPE" = "fedora" ]] || [[ "$OS_LIKE_ID_TYPE" = "fedora" ]]; then
 		echo "--------------------------------------------------------"
 		echo "Installing dependency"
 		echo "--------------------------------------------------------"
-		sudo dnf -y install glib2-devel @c-development meson mutter-devel gobject-introspection
+		run_as_root dnf -y install glib2-devel @c-development meson mutter-devel gobject-introspection
 	else
 		echo "--------------------------------------------------------"
 		echo "Please manually install the equivalent of libglib2.0-dev build-essential libmutter-$DIFF_VALUE_2-dev gobject-introspection meson on your computer"
@@ -91,7 +99,7 @@ install_lib(){
 	echo "Installing the library"
 	echo "--------------------------------------------------------"
 	meson install -C build --destdir "$dest_dir"
-	sudo cp -rf ./build/binary/usr/local/* /usr/
+	run_as_root cp -rf ./build/binary/usr/local/* /usr/
 	
 	cleanup_stage
 	
@@ -107,13 +115,13 @@ uninstall_lib(){
 		echo "--------------------------------------------------------"
 		echo "Uninstalling"
 		echo "--------------------------------------------------------"
-		sudo rm -rf /usr/include/blur-effect-1.0
+		run_as_root rm -rf /usr/include/blur-effect-1.0
 		if [ -e /usr/lib64/libblur-effect-1.0.so ]; then
-			sudo rm /usr/lib64/girepository-1.0/Blur-1.0.typelib /usr/lib64/pkgconfig/blur-effect-1.0.pc /usr/lib64/libblur-effect-1.0.so /usr/lib64/libblur-effect-1.0.so.1 /usr/lib64/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
+			run_as_root rm /usr/lib64/girepository-1.0/Blur-1.0.typelib /usr/lib64/pkgconfig/blur-effect-1.0.pc /usr/lib64/libblur-effect-1.0.so /usr/lib64/libblur-effect-1.0.so.1 /usr/lib64/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
 		elif [ -e /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so ]; then
-			sudo rm /usr/lib/x86_64-linux-gnu/girepository-1.0/Blur-1.0.typelib /usr/lib/x86_64-linux-gnu/pkgconfig/blur-effect-1.0.pc /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so.1 /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
+			run_as_root rm /usr/lib/x86_64-linux-gnu/girepository-1.0/Blur-1.0.typelib /usr/lib/x86_64-linux-gnu/pkgconfig/blur-effect-1.0.pc /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so.1 /usr/lib/x86_64-linux-gnu/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
 		elif [ -e /usr/lib/libblur-effect-1.0.so ]; then
-			sudo rm /usr/lib/girepository-1.0/Blur-1.0.typelib /usr/lib/pkgconfig/blur-effect-1.0.pc /usr/lib/libblur-effect-1.0.so /usr/lib/libblur-effect-1.0.so.1 /usr/lib/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
+			run_as_root rm /usr/lib/girepository-1.0/Blur-1.0.typelib /usr/lib/pkgconfig/blur-effect-1.0.pc /usr/lib/libblur-effect-1.0.so /usr/lib/libblur-effect-1.0.so.1 /usr/lib/libblur-effect-1.0.so.1.0.0 /usr/share/gir-1.0/Blur-1.0.gir || true
 		else
 			echo "--------------------------------------------------------"
 			echo "No library found, skipping"

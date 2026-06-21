@@ -19,4 +19,4 @@ modules:
     snippets:
       - RUN chmod +x /usr/local/bin/rounded_blur_build.sh
       - RUN dconf update
-      - RUN dnf -y install bc git meson glib2-devel gobject-introspection mutter-devel @c-development && SKIP_DEPS=y /usr/local/bin/rounded_blur_build.sh -i && dnf -y remove bc git meson glib2-devel gobject-introspection mutter-devel && dnf -y group remove c-development && dnf -y clean all
+      - RUN dnf -y install bc git meson glib2-devel gobject-introspection mutter-devel @c-development && SKIP_DEPS=y /usr/local/bin/rounded_blur_build.sh -i && dnf -y remove bc git meson glib2-devel gobject-introspection mutter-devel && dnf -y groupremove c-development && dnf -y clean all
