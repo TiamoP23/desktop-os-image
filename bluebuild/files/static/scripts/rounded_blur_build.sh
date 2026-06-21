@@ -157,9 +157,16 @@ prep_stage(){
 	cd gnome-rounded-blur
 	git checkout "$REPO_COMMIT"
 	
+	# Install dependencies first (if not skipped) so pkg-config is available
+	if [[ "${SKIP_DEPS:-n}" != "y" ]]; then
+		install_dep;
+	fi
+	
 	# Get mutter version via pkg-config (container-build-safe)
 	if ! command -v pkg-config >/dev/null 2>&1; then
-		echo "pkg-config is required. Install pkgconf-pkg-config and mutter-devel."
+		echo "pkg-config is required."
+		echo "On Fedora/Bazzite: install pkgconf-pkg-config and mutter-devel"
+		echo "On Debian/Ubuntu: install pkg-config and libmutter-dev"
 		exit 1
 	fi
 
@@ -172,12 +179,18 @@ prep_stage(){
 	done
 
 	if [[ -z "${MUTTER_API_SYS_VER}" ]]; then
-		echo "Could not find libmutter pkg-config metadata. Is mutter-devel installed?"
+		echo "Could not find libmutter pkg-config metadata."
+		echo "On Fedora/Bazzite: is mutter-devel installed?"
+		echo "On Debian/Ubuntu: is libmutter-dev installed?"
 		exit 1
 	fi
 
 	MUTTER_PC="libmutter-${MUTTER_API_SYS_VER}"
 	MUTTER_SYS_VER="$(pkg-config --modversion "${MUTTER_PC}")"
+	
+	# Set DIFF_VALUE_2 for backward compatibility with install_dep (Debian path)
+	DIFF_VALUE_2="${MUTTER_API_SYS_VER}"
+	
 	HARDCODE_MUTTER_SYS_VER=$(cat meson.build | grep -o -P '(?<=mutter_req = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g' -e 's/>//g' -e 's/=//g' -e 's/ //g')
 	MUTTER_API_REPO_VER=$(cat meson.build | grep -o -P '(?<=mutter_api_version = ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/ //g')
 	
@@ -192,10 +205,6 @@ prep_stage(){
 		-e "s/^(mutter_req[[:space:]]*=[[:space:]]*)['\"][^'\"]+['\"]/'>= ${MUTTER_SYS_VER}'/" \
 		-e "s/dependency\(['\"]libmutter-[0-9]+['\"]\)/dependency('libmutter-${MUTTER_API_SYS_VER}')/g" \
 		meson.build
-	
-	if [[ "${SKIP_DEPS:-n}" != "y" ]]; then
-		install_dep;
-	fi
 }
 
 cleanup_stage(){
