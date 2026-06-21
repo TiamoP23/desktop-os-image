@@ -8,7 +8,7 @@ check_env(){
 		if [[ $i = "y" ]] && [[ $u = "n" ]]; then		
 			echo "--------------------------------------------------------"
 			echo "Please do not use this script to install gnome-rounded-blur on Arch Linux"
-			echo "To install this library on Arch, please use the AUR"
+			echo "To install this library on Arch, please do so via the AUR"
 			echo "https://aur.archlinux.org/packages/gnome-rounded-blur"
 			echo "--------------------------------------------------------"
 		elif [[ $i = "n" ]] && [[ $u = "y" ]]; then	
@@ -127,7 +127,7 @@ uninstall_lib(){
 
 prep_stage(){
 	REPO="https://github.com/kancko/gnome-rounded-blur"
-	REPO_REF="v1.0.1"
+	REPO_COMMIT="9c7efb7ac5de60fee47ae403753e54319e839f03"
 	dest_dir="./binary"
 	build_dir="/tmp"
 	
@@ -145,8 +145,9 @@ prep_stage(){
 	if [ -d "gnome-rounded-blur" ]; then
 		rm -rf gnome-rounded-blur
 	fi
-	git clone --depth 1 --branch "$REPO_REF" "$REPO"
+	git clone --depth 1 "$REPO"
 	cd gnome-rounded-blur
+	git checkout "$REPO_COMMIT"
 	
 	# Get mutter version
 	MUTTER_SYS_VER=$(mutter --version | grep -o -P '(?<=mutter ).*' | sed -e 's/"//g' -e "s/'//g" -e 's/\..*//g')
@@ -242,11 +243,9 @@ while true; do
     esac
 done
 
-# handle non-option arguments
+# No positional arguments are required for the install, uninstall, or help flows.
 if [[ $# -ne 0 ]]; then
     echo "$0: no positional arguments are supported."
 	help_doc
     exit 4
 fi
-
-# echo "all: $A, kernel: $k, gnome-shell: $g"
