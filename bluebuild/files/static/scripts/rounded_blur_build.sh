@@ -145,7 +145,7 @@ prep_stage(){
 	if [ -d "gnome-rounded-blur" ]; then
 		rm -rf gnome-rounded-blur
 	fi
-	git clone --depth 1 "$REPO"
+	git clone "$REPO"
 	cd gnome-rounded-blur
 	git checkout "$REPO_COMMIT"
 	
