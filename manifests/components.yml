@@ -21,3 +21,8 @@
   build_command: make build
   build_output: build/CoverflowAltTab@palatis.blogspot.com.shell-extension.zip
   post_install_command: glib-compile-schemas "$COMPONENT_DEST/schemas"
+- id: nextpinp
+  type: gnome-extension
+  install_dir: usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin
+  build_output: .
+  post_install_command: glib-compile-schemas "$COMPONENT_DEST/schemas"
