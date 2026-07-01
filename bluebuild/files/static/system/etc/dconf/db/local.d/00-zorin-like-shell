@@ -1,7 +1,7 @@
 [org/gnome/shell]
 disable-user-extensions=false
-enabled-extensions=['dash-to-panel@jderose9.github.com', 'blur-my-shell@aunetx', 'CoverflowAltTab@palatis.blogspot.com', 'clipboard-indicator@tudmotu.com']
-favorite-apps=['org.gnome.Nautilus.desktop', 'firefox.desktop', 'org.gnome.Software.desktop', 'org.gnome.Console.desktop']
+enabled-extensions=['dash-to-panel@jderose9.github.com', 'blur-my-shell@aunetx', 'CoverflowAltTab@palatis.blogspot.com', 'clipboard-indicator@tudmotu.com', 'gsconnect@andyholmes.github.io', 'caffeine@patapon.info', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'appindicatorsupport@rgcjonas.gmail.com', 'add-to-steam@pupper.space', 'bazaar-integration@kolunmi.github.io', 'restartto@tiagoporsch.github.io', 'nextpinp@leonid.nasedkin']
+favorite-apps=['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'jetbrains-idea-cf9ac5e4-4365-47a6-a975-35da5da7b280.desktop', 'com.visualstudio.code.desktop']
 
 [org/gnome/desktop/interface]
 clock-format='24h'
@@ -55,3 +55,20 @@ trans-panel-opacity=0.0
 trans-use-custom-bg=true
 trans-use-custom-opacity=true
 trans-use-dynamic-opacity=true
+
+[org/gnome/shell/extensions/gsconnect]
+enabled=true
+name='bazzite'
+
+[org/gnome/shell/extensions/caffeine]
+indicator-position-max=2
+show-notifications=false
+
+[org/gnome/shell/extensions/user-theme]
+name=''
+
+[org/gnome/shell/extensions/add-to-steam]
+use-nautilus=false
+
+[org/gnome/shell/extensions/nextpinp]
+corner='top-right'

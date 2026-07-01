@@ -14,3 +14,6 @@ branch = master
 path = vendor/extensions/coverflow-alt-tab
 url = https://github.com/dsheeler/CoverflowAltTab.git
 branch = main
+[submodule "vendor/extensions/nextpinp"]
+	path = vendor/extensions/nextpinp
+	url = https://github.com/EvilX/nextpinp.git
