@@ -22,21 +22,36 @@ workspaces-only-on-primary=false
 
 
 [org/gnome/shell/extensions/clipboard-indicator]
+display-mode=3
 toggle-menu=['<Super>v']
 
+[org/gnome/shell/extensions/coverflowalttab]
+bind-to-switch-applications=false
+hide-panel=false
+switcher-looping-method='Carousel'
+
+[org/gnome/shell/extensions/blur-my-shell]
+settings-version=2
+
+[org/gnome/shell/extensions/blur-my-shell/applications]
+blur=true
+brightness=0.9
+dynamic-opacity=false
+opacity=230
+whitelist=['org.gnome.*']
+
+[org/gnome/shell/extensions/blur-my-shell/dash-to-dock]
+static-blur=false
+
 [org/gnome/shell/extensions/dash-to-panel]
-appicon-margin=6
+appicon-margin=4
 appicon-padding=6
 context-menu-entries='[{"title":"Terminal","cmd":"TERMINALSETTINGS"},{"title":"Files","cmd":"nautilus"}]'
 hide-overview-on-startup=true
-hotkeys-overlay-combo='TEMPORARILY'
 isolate-workspaces=true
-multi-monitors=true
 overview-click-to-exit=true
-panel-element-positions='{"AUS-NCLMQS036168":[{"element":"showAppsButton","visible":true,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"centerMonitor"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}],"AUS-MALMQS087192":[{"element":"showAppsButton","visible":true,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"centerMonitor"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}]}'
-panel-element-positions-monitors-sync=true
-trans-dynamic-anim-target=0.7
-trans-dynamic-anim-time=300
-trans-panel-opacity=0.2
+panel-element-positions='{"0":[{"element":"showAppsButton","visible":true,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"centerMonitor"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"centerMonitor"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}]}'
+trans-panel-opacity=0.0
+trans-use-custom-bg=true
 trans-use-custom-opacity=true
 trans-use-dynamic-opacity=true
