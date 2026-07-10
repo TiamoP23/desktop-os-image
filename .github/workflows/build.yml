@@ -45,7 +45,7 @@ jobs:
         run: bash ./scripts/prepare-components.sh
 
       - name: Build and publish image
-        uses: blue-build/github-action@v1
+        uses: blue-build/github-action@836161eb076426a451e6a0054f722b1153b8b3ad # v1
         with:
           working_directory: ./bluebuild
           skip_checkout: true
