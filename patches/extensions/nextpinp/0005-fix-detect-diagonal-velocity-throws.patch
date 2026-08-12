@@ -1,0 +1,39 @@
+From 128be3895a97260e9f123f31b780144c2d7679fc Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Mon, 6 Jul 2026 04:16:05 +0200
+Subject: [PATCH 5/5] fix: detect diagonal velocity throws
+
+---
+ extension.js | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/extension.js b/extension.js
+index c539b7e..1adb971 100644
+--- a/extension.js
++++ b/extension.js
+@@ -5,6 +5,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+ 
+ const THROW_DISTANCE_THRESHOLD = 80;
+ const THROW_SPEED_THRESHOLD = 0.6;
++const DIAGONAL_AXIS_RATIO = 0.5;
+ 
+ const PIP_TITLES = [
+     'picture-in-picture',
+@@ -170,9 +171,11 @@ function chooseSnapCorner(window, settings, startRect, startTime, allowVelocity
+         return nearestCornerForRect(workArea, endRect);
+     }
+ 
+-    const horizontalDominates = Math.abs(dx) > Math.abs(dy);
+-    const verticalDominates = Math.abs(dy) > Math.abs(dx);
+-    const diagonal = !horizontalDominates && !verticalDominates;
++    const absDx = Math.abs(dx);
++    const absDy = Math.abs(dy);
++    const diagonal = Math.min(absDx, absDy) / Math.max(absDx, absDy) >= DIAGONAL_AXIS_RATIO;
++    const horizontalDominates = !diagonal && absDx > absDy;
++    const verticalDominates = !diagonal && absDy > absDx;
+ 
+     let onLeft, onTop;
+ 
+-- 
+2.54.0
+

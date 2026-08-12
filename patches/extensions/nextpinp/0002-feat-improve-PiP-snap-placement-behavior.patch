@@ -1,0 +1,379 @@
+From c679a24e1ecebfb0dbc7b99b479843c4403983af Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Thu, 2 Jul 2026 17:41:49 +0000
+Subject: [PATCH 2/5] feat: improve PiP snap placement behavior
+
+---
+ extension.js | 292 +++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 259 insertions(+), 33 deletions(-)
+
+diff --git a/extension.js b/extension.js
+index c0f65af..f03a1f9 100644
+--- a/extension.js
++++ b/extension.js
+@@ -1,7 +1,11 @@
++import Clutter from 'gi://Clutter';
+ import GLib from 'gi://GLib';
+ import Meta from 'gi://Meta';
+ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+ 
++const THROW_DISTANCE_THRESHOLD = 80;
++const THROW_SPEED_THRESHOLD = 0.6;
++
+ const PIP_TITLES = [
+     'picture-in-picture',
+     'picture in picture',
+@@ -62,50 +66,126 @@ function cornerPosition(corner, offset, workArea, frameRect) {
+     }
+ }
+ 
+-function moveToPiPCorner(window, settings) {
+-    const workArea = window.get_work_area_current_monitor();
+-    const frameRect = window.get_frame_rect();
++function nearestCornerForRect(workArea, frameRect) {
++    const cx = frameRect.x + frameRect.width / 2;
++    const cy = frameRect.y + frameRect.height / 2;
++    const onLeft = cx < workArea.x + workArea.width / 2;
++    const onTop = cy < workArea.y + workArea.height / 2;
+ 
+-    if (!frameRect.width || !frameRect.height)
+-        return false;
++    return onLeft && onTop ? 'top-left' :
++        !onLeft && onTop ? 'top-right' :
++        onLeft ? 'bottom-left' : 'bottom-right';
++}
++
++function monitorConnector(index) {
++    const manager = global.backend?.get_monitor_manager?.();
++    if (!manager)
++        return '';
+ 
+-    const { x, y } = cornerPosition(
+-        settings.get_string('corner'),
+-        settings.get_int('offset'),
+-        workArea, frameRect
+-    );
+-    window.move_frame(true, x, y);
+-    return true;
++    for (const logicalMonitor of manager.get_logical_monitors()) {
++        if (logicalMonitor.get_number() !== index)
++            continue;
++
++        const monitors = logicalMonitor.get_monitors();
++        const monitor = monitors?.[0];
++        return monitor?.get_connector?.() ?? '';
++    }
++
++    return '';
+ }
+ 
+-// Snap to the nearest corner after a drag, then persist the new corner in settings.
+-function snapToNearestCorner(window, settings) {
++function findRememberedMonitor(settings) {
++    const connector = settings.get_string('remembered-monitor-connector');
++    if (!connector)
++        return -1;
++
++    const count = global.display.get_n_monitors();
++    for (let index = 0; index < count; index++) {
++        if (monitorConnector(index) === connector)
++            return index;
++    }
++
++    return -1;
++}
++
++function getTargetWorkArea(window, settings) {
++    if (settings.get_boolean('remember-monitor')) {
++        const remembered = findRememberedMonitor(settings);
++        if (remembered >= 0 && remembered < global.display.get_n_monitors())
++            return global.display.get_monitor_work_area(remembered);
++    }
++
++    return window.get_work_area_current_monitor();
++}
++
++function rememberWindowMonitor(window, settings) {
++    if (!settings.get_boolean('remember-monitor'))
++        return;
++
++    const monitorIndex = window.get_monitor();
++    const connector = monitorConnector(monitorIndex);
++    if (connector)
++        settings.set_string('remembered-monitor-connector', connector);
++}
++
++function chooseSnapCorner(window, settings, startRect, startTime, allowVelocity = true) {
+     const workArea = window.get_work_area_current_monitor();
+-    const frameRect = window.get_frame_rect();
+-    const offset = settings.get_int('offset');
++    const endRect = window.get_frame_rect();
+ 
+-    // Use window centre to decide which quadrant it's in.
+-    const cx = frameRect.x + frameRect.width / 2;
+-    const cy = frameRect.y + frameRect.height / 2;
+-    const onLeft = cx < workArea.x + workArea.width / 2;
+-    const onTop  = cy < workArea.y + workArea.height / 2;
++    if (!allowVelocity || !startRect || startTime == null)
++        return nearestCornerForRect(workArea, endRect);
++
++    const elapsedMs = (GLib.get_monotonic_time() - startTime) / 1000;
++    const startCx = startRect.x + startRect.width / 2;
++    const startCy = startRect.y + startRect.height / 2;
++    const endCx = endRect.x + endRect.width / 2;
++    const endCy = endRect.y + endRect.height / 2;
++    const dx = endCx - startCx;
++    const dy = endCy - startCy;
++    const distance = Math.sqrt(dx * dx + dy * dy);
++    const speed = elapsedMs > 0 ? distance / elapsedMs : 0;
++
++    if (
++        !settings.get_boolean('velocity-throw') ||
++        distance < THROW_DISTANCE_THRESHOLD ||
++        speed < THROW_SPEED_THRESHOLD
++    ) {
++        return nearestCornerForRect(workArea, endRect);
++    }
++
++    const horizontalDominates = Math.abs(dx) > Math.abs(dy);
++    const verticalDominates = Math.abs(dy) > Math.abs(dx);
++    const diagonal = !horizontalDominates && !verticalDominates;
+ 
+-    const corner =
+-        onLeft && onTop  ? 'top-left'    :
+-        !onLeft && onTop ? 'top-right'   :
+-        onLeft           ? 'bottom-left' : 'bottom-right';
++    let onLeft, onTop;
+ 
+-    const { x, y } = cornerPosition(corner, offset, workArea, frameRect);
+-    window.move_frame(true, x, y);
++    if (diagonal) {
++        onLeft = dx < 0;
++        onTop = dy < 0;
++    } else if (horizontalDominates) {
++        onLeft = dx < 0;
++        const nearest = nearestCornerForRect(workArea, endRect);
++        onTop = nearest === 'top-left' || nearest === 'top-right';
++    } else {
++        onTop = dy < 0;
++        const nearest = nearestCornerForRect(workArea, endRect);
++        onLeft = nearest === 'top-left' || nearest === 'bottom-left';
++    }
+ 
+-    // Persist so the next PiP window opens in the same corner.
+-    settings.set_string('corner', corner);
++    return onLeft && onTop ? 'top-left' :
++        !onLeft && onTop ? 'top-right' :
++        onLeft ? 'bottom-left' : 'bottom-right';
+ }
+ 
+ export default class AutoPiPManager extends Extension {
+     enable() {
+         this._settings = this.getSettings();
+         this._pendingIdles = new Set();
++        this._animatedActors = new Set();
++        this._actorDestroyIds = new Map();
++        this._dragStartRects = new WeakMap();
++        this._dragStartTimes = new WeakMap();
++        this._grabOps = new WeakMap();
+ 
+         this._windowCreatedId = global.display.connect('window-created', (_display, window) => {
+             const id = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+@@ -116,12 +196,12 @@ export default class AutoPiPManager extends Extension {
+ 
+                 applyPiPAttributes(window, this._settings);
+ 
+-                if (!moveToPiPCorner(window, this._settings)) {
++                if (!this._moveToPiPCorner(window)) {
+                     const actor = window.get_compositor_private();
+                     if (actor) {
+                         const frameId = actor.connect('first-frame', () => {
+                             actor.disconnect(frameId);
+-                            moveToPiPCorner(window, this._settings);
++                            this._moveToPiPCorner(window);
+                         });
+                     }
+                 }
+@@ -131,7 +211,18 @@ export default class AutoPiPManager extends Extension {
+             this._pendingIdles.add(id);
+         });
+ 
+-        // Snap to nearest corner when a PiP window drag ends.
++        this._grabOpBeginId = global.display.connect('grab-op-begin', (_display, window, op) => {
++            if (!window || !isPiP(window))
++                return;
++            if (op !== Meta.GrabOp.MOVING && op !== Meta.GrabOp.KEYBOARD_MOVING)
++                return;
++            this._grabOps.set(window, op);
++            if (op === Meta.GrabOp.MOVING) {
++                this._dragStartRects.set(window, window.get_frame_rect());
++                this._dragStartTimes.set(window, GLib.get_monotonic_time());
++            }
++        });
++
+         this._grabOpEndId = global.display.connect('grab-op-end', (_display, window, op) => {
+             if (!window)
+                 return;
+@@ -139,16 +230,147 @@ export default class AutoPiPManager extends Extension {
+                 return;
+             if (!isPiP(window))
+                 return;
+-            snapToNearestCorner(window, this._settings);
++
++            const grabOp = this._grabOps.get(window);
++            this._grabOps.delete(window);
++            const startRect = this._dragStartRects.get(window);
++            const startTime = this._dragStartTimes.get(window);
++            this._dragStartRects.delete(window);
++            this._dragStartTimes.delete(window);
++
++            const allowVelocity = grabOp === Meta.GrabOp.MOVING;
++            const corner = chooseSnapCorner(window, this._settings, startRect, startTime, allowVelocity);
++            const workArea = window.get_work_area_current_monitor();
++            const frameRect = window.get_frame_rect();
++            const offset = this._settings.get_int('offset');
++            const { x, y } = cornerPosition(corner, offset, workArea, frameRect);
++
++            this._moveWindowTo(window, x, y, this._settings, { animate: true });
++
++            if (this._settings.get_boolean('remember-corner'))
++                this._settings.set_string('corner', corner);
++
++            rememberWindowMonitor(window, this._settings);
++        });
++    }
++
++    _moveToPiPCorner(window) {
++        const settings = this._settings;
++        const workArea = getTargetWorkArea(window, settings);
++        const frameRect = window.get_frame_rect();
++
++        if (!frameRect.width || !frameRect.height)
++            return false;
++
++        const { x, y } = cornerPosition(
++            settings.get_string('corner'),
++            settings.get_int('offset'),
++            workArea, frameRect
++        );
++        this._moveWindowTo(window, x, y, settings, { animate: false });
++        return true;
++    }
++
++    _moveWindowTo(window, x, y, settings, { animate = false } = {}) {
++        const actor = window.get_compositor_private();
++        const duration = settings.get_int('snap-animation-duration');
++
++        if (!animate || !settings.get_boolean('snap-animation') || duration === 0 || !actor) {
++            window.move_frame(true, x, y);
++            return;
++        }
++
++        const before = window.get_frame_rect();
++        const dx = before.x - x;
++        const dy = before.y - y;
++
++        window.move_frame(true, x, y);
++
++        actor.remove_all_transitions?.();
++        actor.translation_x = dx;
++        actor.translation_y = dy;
++
++        this._trackAnimatedActor(actor);
++
++        actor.ease({
++            translation_x: 0,
++            translation_y: 0,
++            duration,
++            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
++            onComplete: () => {
++                actor.translation_x = 0;
++                actor.translation_y = 0;
++                this._untrackAnimatedActor(actor);
++            },
+         });
+     }
+ 
++    _trackAnimatedActor(actor) {
++        if (!this._animatedActors)
++            return;
++
++        if (this._animatedActors.has(actor))
++            this._untrackAnimatedActor(actor);
++
++        this._animatedActors.add(actor);
++        const destroyId = actor.connect('destroy', () => {
++            this._untrackAnimatedActor(actor);
++        });
++        if (!this._actorDestroyIds)
++            this._actorDestroyIds = new Map();
++        this._actorDestroyIds.set(actor, destroyId);
++    }
++
++    _untrackAnimatedActor(actor) {
++        if (!this._animatedActors)
++            return;
++
++        this._animatedActors.delete(actor);
++
++        if (this._actorDestroyIds?.has(actor)) {
++            const destroyId = this._actorDestroyIds.get(actor);
++            try {
++                actor.disconnect(destroyId);
++            } catch (e) {
++                // Actor may already be destroyed; ignore.
++            }
++            this._actorDestroyIds.delete(actor);
++        }
++    }
++
+     disable() {
++        if (this._animatedActors) {
++            for (const actor of this._animatedActors) {
++                actor.remove_all_transitions?.();
++                actor.translation_x = 0;
++                actor.translation_y = 0;
++            }
++            this._animatedActors.clear();
++            this._animatedActors = null;
++        }
++
++        if (this._actorDestroyIds) {
++            for (const [actor, destroyId] of this._actorDestroyIds) {
++                try {
++                    actor.disconnect(destroyId);
++                } catch (e) {
++                    // Actor may already be destroyed; ignore.
++                }
++            }
++            this._actorDestroyIds.clear();
++            this._actorDestroyIds = null;
++        }
++
+         if (this._windowCreatedId) {
+             global.display.disconnect(this._windowCreatedId);
+             this._windowCreatedId = null;
+         }
+ 
++        if (this._grabOpBeginId) {
++            global.display.disconnect(this._grabOpBeginId);
++            this._grabOpBeginId = null;
++        }
++
+         if (this._grabOpEndId) {
+             global.display.disconnect(this._grabOpEndId);
+             this._grabOpEndId = null;
+@@ -158,6 +380,10 @@ export default class AutoPiPManager extends Extension {
+             GLib.source_remove(id);
+         this._pendingIdles = null;
+ 
++        this._dragStartRects = null;
++        this._dragStartTimes = null;
++        this._grabOps = null;
++
+         this._settings = null;
+     }
+ }
+-- 
+2.54.0
+

@@ -1,0 +1,29 @@
+From 0d060d6955f55d724d52db40d972afc022f57a70 Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Sun, 5 Jul 2026 04:06:17 +0200
+Subject: [PATCH 3/5] fix: use workspace monitor work area lookup
+
+---
+ extension.js | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/extension.js b/extension.js
+index f03a1f9..247830b 100644
+--- a/extension.js
++++ b/extension.js
+@@ -111,8 +111,10 @@ function findRememberedMonitor(settings) {
+ function getTargetWorkArea(window, settings) {
+     if (settings.get_boolean('remember-monitor')) {
+         const remembered = findRememberedMonitor(settings);
+-        if (remembered >= 0 && remembered < global.display.get_n_monitors())
+-            return global.display.get_monitor_work_area(remembered);
++        if (remembered >= 0 && remembered < global.display.get_n_monitors()) {
++            const workspace = global.workspace_manager.get_workspace_by_index(0);
++            return workspace.get_work_area_for_monitor(remembered);
++        }
+     }
+ 
+     return window.get_work_area_current_monitor();
+-- 
+2.54.0
+

@@ -1,0 +1,103 @@
+From df2024d195651620927f1087045cceac8825e720 Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Thu, 2 Jul 2026 17:41:49 +0000
+Subject: [PATCH 1/5] feat: add remembered PiP placement settings
+
+---
+ prefs.js                                      | 28 +++++++++++++++++
+ ...ll.extensions.auto-pip-manager.gschema.xml | 31 +++++++++++++++++++
+ 2 files changed, 59 insertions(+)
+
+diff --git a/prefs.js b/prefs.js
+index 594ad76..6ba28d4 100644
+--- a/prefs.js
++++ b/prefs.js
+@@ -1,9 +1,16 @@
+ import Adw from 'gi://Adw';
++import Gio from 'gi://Gio';
+ import Gtk from 'gi://Gtk';
+ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+ 
+ const CORNER_VALUES = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
+ 
++function addSwitchRow(group, settings, key, title, subtitle) {
++    const row = new Adw.SwitchRow({ title, subtitle });
++    settings.bind(key, row, 'active', Gio.SettingsBindFlags.DEFAULT);
++    group.add(row);
++}
++
+ export default class AutoPiPPreferences extends ExtensionPreferences {
+     fillPreferencesWindow(window) {
+         const _ = this.gettext.bind(this);
+@@ -72,6 +79,27 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
+         });
+         positionGroup.add(offsetRow);
+ 
++        addSwitchRow(positionGroup, settings, 'remember-corner', _('Remember Last Corner'), _('Use the last snapped PiP corner for future PiP windows'));
++        addSwitchRow(positionGroup, settings, 'remember-monitor', _('Remember Last Monitor'), _('Use the last PiP monitor for future PiP windows when available'));
++        addSwitchRow(positionGroup, settings, 'snap-animation', _('Animate Snapping'), _('Smoothly animate PiP windows into the target corner'));
++
++        const snapDurationRow = new Adw.SpinRow({
++            title: _('Snap Animation Duration'),
++            subtitle: _('Duration in milliseconds'),
++            adjustment: new Gtk.Adjustment({
++                lower: 0,
++                upper: 500,
++                step_increment: 10,
++                value: settings.get_int('snap-animation-duration'),
++            }),
++        });
++        snapDurationRow.connect('notify::value', () => {
++            settings.set_int('snap-animation-duration', Math.round(snapDurationRow.value));
++        });
++        positionGroup.add(snapDurationRow);
++
++        addSwitchRow(positionGroup, settings, 'velocity-throw', _('Velocity-Aware Throw'), _('Use fling direction to choose the snap corner'));
++
+         window.add(page);
+     }
+ }
+diff --git a/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml b/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml
+index 7664742..0867479 100644
+--- a/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml
++++ b/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml
+@@ -23,5 +23,36 @@
+       <summary>Always on all workspaces</summary>
+       <description>Show PiP windows on every workspace</description>
+     </key>
++    <key name="remember-corner" type="b">
++      <default>true</default>
++      <summary>Remember last corner</summary>
++      <description>Update the preferred PiP corner after manually moving and snapping a PiP window</description>
++    </key>
++    <key name="remember-monitor" type="b">
++      <default>true</default>
++      <summary>Remember last monitor</summary>
++      <description>Open new PiP windows on the last monitor used for PiP when that monitor is available</description>
++    </key>
++    <key name="remembered-monitor-connector" type="s">
++      <default>''</default>
++      <summary>Remembered monitor connector</summary>
++      <description>Connector name of the last monitor used for PiP placement</description>
++    </key>
++    <key name="snap-animation" type="b">
++      <default>true</default>
++      <summary>Animate snapping</summary>
++      <description>Animate PiP windows when snapping them to a corner</description>
++    </key>
++    <key name="snap-animation-duration" type="i">
++      <default>180</default>
++      <range min="0" max="500"/>
++      <summary>Snap animation duration</summary>
++      <description>Duration of PiP snap animation in milliseconds</description>
++    </key>
++    <key name="velocity-throw" type="b">
++      <default>true</default>
++      <summary>Velocity-aware throw</summary>
++      <description>Use drag direction to choose a target corner when a PiP window is flung</description>
++    </key>
+   </schema>
+ </schemalist>
+-- 
+2.54.0
+

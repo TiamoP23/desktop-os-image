@@ -1,0 +1,146 @@
+From 3ce7b62fe5411204c72de1ddd4cd4040b74c89ec Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sun, 5 Jul 2026 20:48:04 +0200
+Subject: [PATCH 4/5] fix: hide and close minimized PiP windows
+
+---
+ extension.js | 95 ++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 84 insertions(+), 11 deletions(-)
+
+diff --git a/extension.js b/extension.js
+index 247830b..c539b7e 100644
+--- a/extension.js
++++ b/extension.js
+@@ -42,6 +42,21 @@ function applyPiPAttributes(window, settings) {
+         window.make_above();
+ }
+ 
++function hidePiPFromWindowList(window) {
++    try {
++        window.hide_from_window_list?.();
++    } catch (_e) {
++        // Some Mutter versions may not expose this method to extensions.
++    }
++}
++
++function closeMinimizedPiPWindow(window) {
++    if (!window.minimized)
++        return;
++
++    window.delete(global.get_current_time());
++}
++
+ // Returns the corner key and target {x, y} for the given corner + offset.
+ function cornerPosition(corner, offset, workArea, frameRect) {
+     switch (corner) {
+@@ -188,6 +203,7 @@ export default class AutoPiPManager extends Extension {
+         this._dragStartRects = new WeakMap();
+         this._dragStartTimes = new WeakMap();
+         this._grabOps = new WeakMap();
++        this._trackedWindows = new Map();
+ 
+         this._windowCreatedId = global.display.connect('window-created', (_display, window) => {
+             const id = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+@@ -196,17 +212,7 @@ export default class AutoPiPManager extends Extension {
+                 if (!isPiP(window))
+                     return GLib.SOURCE_REMOVE;
+ 
+-                applyPiPAttributes(window, this._settings);
+-
+-                if (!this._moveToPiPCorner(window)) {
+-                    const actor = window.get_compositor_private();
+-                    if (actor) {
+-                        const frameId = actor.connect('first-frame', () => {
+-                            actor.disconnect(frameId);
+-                            this._moveToPiPCorner(window);
+-                        });
+-                    }
+-                }
++                this._managePiPWindow(window);
+ 
+                 return GLib.SOURCE_REMOVE;
+             });
+@@ -254,6 +260,61 @@ export default class AutoPiPManager extends Extension {
+ 
+             rememberWindowMonitor(window, this._settings);
+         });
++
++        this._settingsChangedIds = [
++            this._settings.connect('changed::always-on-top', () => this._reapplyPiPAttributes()),
++            this._settings.connect('changed::always-on-all-workspaces', () => this._reapplyPiPAttributes()),
++        ];
++
++        for (const actor of global.get_window_actors()) {
++            const window = actor.meta_window;
++            if (isPiP(window))
++                this._managePiPWindow(window);
++        }
++    }
++
++    _managePiPWindow(window) {
++        if (this._trackedWindows.has(window))
++            return;
++
++        hidePiPFromWindowList(window);
++        applyPiPAttributes(window, this._settings);
++
++        if (!this._moveToPiPCorner(window)) {
++            const actor = window.get_compositor_private();
++            if (actor) {
++                const frameId = actor.connect('first-frame', () => {
++                    actor.disconnect(frameId);
++                    this._moveToPiPCorner(window);
++                });
++            }
++        }
++
++        const minimizedId = window.connect('notify::minimized', () => {
++            closeMinimizedPiPWindow(window);
++        });
++        const unmanagedId = window.connect('unmanaged', () => {
++            this._untrackPiPWindow(window);
++        });
++
++        this._trackedWindows.set(window, { minimizedId, unmanagedId });
++    }
++
++    _untrackPiPWindow(window) {
++        const signalIds = this._trackedWindows.get(window);
++        if (!signalIds)
++            return;
++
++        window.disconnect(signalIds.minimizedId);
++        window.disconnect(signalIds.unmanagedId);
++        this._trackedWindows.delete(window);
++    }
++
++    _reapplyPiPAttributes() {
++        for (const window of this._trackedWindows.keys()) {
++            applyPiPAttributes(window, this._settings);
++            closeMinimizedPiPWindow(window);
++        }
+     }
+ 
+     _moveToPiPCorner(window) {
+@@ -386,6 +447,18 @@ export default class AutoPiPManager extends Extension {
+         this._dragStartTimes = null;
+         this._grabOps = null;
+ 
++        if (this._settingsChangedIds) {
++            for (const id of this._settingsChangedIds)
++                this._settings.disconnect(id);
++            this._settingsChangedIds = null;
++        }
++
++        if (this._trackedWindows) {
++            for (const window of [...this._trackedWindows.keys()])
++                this._untrackPiPWindow(window);
++            this._trackedWindows = null;
++        }
++
+         this._settings = null;
+     }
+ }
+-- 
+2.54.0
+
