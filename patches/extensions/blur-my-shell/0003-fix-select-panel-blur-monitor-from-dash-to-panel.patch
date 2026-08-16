@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Wed, 12 Aug 2026 00:00:00 +0000
+Subject: [PATCH 3/3] fix: select panel blur monitor from Dash to Panel
+
+---
+ src/components/panel.js | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/src/components/panel.js b/src/components/panel.js
+index 2256de5..caeea28 100644
+--- a/src/components/panel.js
++++ b/src/components/panel.js
+@@ -167,7 +167,14 @@ export const PanelBlur = class PanelBlur {
+         if (!actors)
+             // if the actors is not blurred, blur it
+             this.blur_panel(panel);
+     }
+
++    /// Find the monitor assigned to a panel.
++    find_panel_monitor(panel) {
++        const monitor_index = panel.get_parent()?._dtpIndex;
++        return Main.layoutManager.monitors[monitor_index]
++            ?? Main.layoutManager.findMonitorForActor(panel);
++    }
++
+     /// Blur a panel
+     blur_panel(panel) {
+@@ -176,6 +176,6 @@ export const PanelBlur = class PanelBlur {
+             panel_box = panel_box.get_parent();
+         }
+
+-        let monitor = Main.layoutManager.findMonitorForActor(panel);
++        let monitor = this.find_panel_monitor(panel);
+         if (!monitor)
+             return;
+@@ -276,13 +276,12 @@ export const PanelBlur = class PanelBlur {
+         let panel_box = actors.widgets.panel_box;
+         let background = actors.widgets.background;
+         let [width, height] = panel_box.get_size();
++        let monitor = this.find_panel_monitor(panel);
++        if (!monitor)
++            return;
+
+         // if static blur, need to clip the background
+         if (actors.static_blur) {
+-            let monitor = Main.layoutManager.findMonitorForActor(panel);
+-            if (!monitor)
+-                return;
+-
+             // an alternative to panel.get_transformed_position, because it
+             // sometimes yields NaN (probably when the actor is not fully
+             // positionned yet)
+@@ -305,4 +308,4 @@ export const PanelBlur = class PanelBlur {
+
+         // update the monitor panel is on
+-        actors.monitor = Main.layoutManager.findMonitorForActor(panel);
++        actors.monitor = monitor;
+     }
