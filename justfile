@@ -1,6 +1,6 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-recipe_path := "bluebuild/recipes/main.yml"
+recipe_path := "recipes/main.yml"
 prepare_components_script := "./scripts/prepare-components.sh"
 component_edit_script := "./scripts/component-edit.sh"
 bluebuild_check := "command -v bluebuild >/dev/null 2>&1 || { echo \"bluebuild CLI is not installed\" >&2; exit 1; }"
@@ -22,15 +22,15 @@ prepare component='':
 
 generate:
     @{{bluebuild_check}}
-    bluebuild generate -d "{{recipe_path}}"
+    cd bluebuild && bluebuild generate -d "{{recipe_path}}"
 
 build:
     @{{bluebuild_check}}
-    bluebuild build "{{recipe_path}}"
+    cd bluebuild && bluebuild build "{{recipe_path}}"
 
 switch:
     @{{bluebuild_check}}
-    bluebuild switch "{{recipe_path}}"
+    cd bluebuild && bluebuild switch "{{recipe_path}}"
 
 sync-submodules:
     git submodule sync --recursive
