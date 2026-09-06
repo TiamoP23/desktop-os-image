@@ -43,6 +43,7 @@ jobs:
           bash ./scripts/test-blur-my-shell-source.sh
           bash ./scripts/test-nextpinp-source.sh
           bash ./scripts/test-extension-metadata.sh
+          bash ./scripts/test-render-determinism.sh
 
       - name: Check shell scripts
         run: bash -n scripts/*.sh bluebuild/files/static/scripts/*.sh

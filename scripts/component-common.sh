@@ -342,7 +342,7 @@ apply_patches_to_repo() {
       continue
     fi
 
-    if ! "${git_am_env[@]}" git -C "$repo_path" am --3way "$patch_file" >/dev/null; then
+    if ! "${git_am_env[@]}" git -C "$repo_path" am --3way --committer-date-is-author-date "$patch_file" >/dev/null; then
       git -C "$repo_path" am --abort >/dev/null 2>&1 || true
       fail "Failed to apply patch for $component_name: $(basename "$patch_file"). The vendor checkout may already include those commits, or the patch queue no longer matches the pinned base."
       return 1
