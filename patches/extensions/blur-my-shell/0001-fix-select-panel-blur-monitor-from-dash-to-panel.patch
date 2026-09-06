@@ -1,0 +1,77 @@
+From 01956ecebb1f87a8c67aa1dc32e01e463175c6f8 Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 14:58:33 +0200
+Subject: [PATCH] fix: select panel blur monitor from Dash to Panel
+
+---
+ src/components/panel.js | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
+
+diff --git a/src/components/panel.js b/src/components/panel.js
+index f246521..02da5cc 100644
+--- a/src/components/panel.js
++++ b/src/components/panel.js
+@@ -189,6 +189,13 @@ export const PanelBlur = class PanelBlur {
+             this.blur_panel(panel);
+     }
+ 
++    /// Find the monitor assigned to a panel.
++    find_panel_monitor(panel) {
++        const monitor_index = panel.get_parent()?._dtpIndex;
++        return Main.layoutManager.monitors[monitor_index]
++            ?? Main.layoutManager.findMonitorForActor(panel);
++    }
++
+     /// Blur a panel
+     blur_panel(panel) {
+         let geometry_actor = panel;
+@@ -202,7 +209,7 @@ export const PanelBlur = class PanelBlur {
+             panel_box = panel_box.get_parent();
+         }
+ 
+-        let monitor = Main.layoutManager.findMonitorForActor(panel);
++        let monitor = this.find_panel_monitor(panel);
+         if (!monitor)
+             return;
+ 
+@@ -354,26 +361,22 @@ export const PanelBlur = class PanelBlur {
+     }
+ 
+     update_size(actors) {
++        let panel = actors.widgets.panel;
+         let geometry_actor = actors.widgets.geometry_actor;
+         let panel_box = actors.widgets.panel_box;
+         let wrapper = actors.widgets.wrapper;
+         let background = actors.widgets.background;
+         let [width, height] = panel_box.get_size();
+         let [geometry_width, geometry_height] = geometry_actor.get_size();
++        let monitor = this.find_panel_monitor(panel);
+ 
+-        if (!width || !height || !geometry_width || !geometry_height) {
++        if (!width || !height || !geometry_width || !geometry_height || !monitor) {
+             this.queue_update_size(actors);
+             return;
+         }
+ 
+         // if static blur, need to clip the background
+         if (actors.static_blur) {
+-            let monitor = Main.layoutManager.findMonitorForActor(geometry_actor);
+-            if (!monitor) {
+-                this.queue_update_size(actors);
+-                return;
+-            }
+-
+             let [p_x, p_y] = panel_box.get_position();
+             let [p_p_x, p_p_y] = panel_box.get_parent().get_position();
+ 
+@@ -426,7 +429,7 @@ export const PanelBlur = class PanelBlur {
+         }
+ 
+         // update the monitor panel is on
+-        actors.monitor = Main.layoutManager.findMonitorForActor(geometry_actor);
++        actors.monitor = monitor;
+     }
+ 
+     /// Connect when overview if opened/closed to hide/show the blur accordingly
+-- 
+2.43.0
