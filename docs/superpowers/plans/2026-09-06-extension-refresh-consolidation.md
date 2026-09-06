@@ -607,6 +607,12 @@ git commit -m "feat: finalize next pip image integration"
 - Consumes: the five tested patches stored in commit `1df23c3` and clean Next PIP base `b6d29fa`.
 - Produces: the same final source as the locally installed test copy, represented by three coherent commits and three exported patches.
 
+> **Final-review correction:** The local-copy equivalence above was the Task 5
+> reconstruction baseline. Commit `688fb73` intentionally supersedes it by
+> applying settings in both directions, using the window-scoped remembered-monitor
+> work area, and cleaning up deferred `first-frame` handlers. Preserve those
+> corrections rather than restoring byte equivalence with the older local copy.
+
 - [ ] **Step 1: Extend the source test with custom behavior assertions**
 
 Add these variables after `set -euo pipefail` in
@@ -761,6 +767,9 @@ diff -u /home/tiamop23/.local/share/gnome-shell/extensions/nextpinp@leonid.nased
 ```
 
 Expected: the source test exits 0 and all three diffs produce no output.
+This comparison records the initial Task 5 baseline only; the final-review
+corrections documented above intentionally make the rendered `extension.js`
+different from that local test copy.
 
 - [ ] **Step 11: Commit the rebuilt Next PIP queue and behavior test**
 
