@@ -1,20 +1,28 @@
-From 6c58189ced55dfc49d6288eb14c4a298cbc35ec1 Mon Sep 17 00:00:00 2001
+From 2d6fa6cb112da1b8df279e92693f70021d927437 Mon Sep 17 00:00:00 2001
 From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 22:32:01 +0200
 Subject: [PATCH 3/3] fix: manage PiP window lifecycle
 
 ---
- extension.js | 95 ++++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 84 insertions(+), 11 deletions(-)
+ extension.js | 133 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 122 insertions(+), 11 deletions(-)
 
 diff --git a/extension.js b/extension.js
-index 413e1be..1adb971 100644
+index 24aa6a4..edf4681 100644
 --- a/extension.js
 +++ b/extension.js
-@@ -43,6 +43,21 @@ function applyPiPAttributes(window, settings) {
+@@ -39,8 +39,27 @@ function isPiP(window) {
+ function applyPiPAttributes(window, settings) {
+     if (settings.get_boolean('always-on-all-workspaces'))
+         window.stick();
++    else
++        window.unstick();
+     if (settings.get_boolean('always-on-top'))
          window.make_above();
- }
- 
++    else
++        window.unmake_above();
++}
++
 +function hidePiPFromWindowList(window) {
 +    try {
 +        window.hide_from_window_list?.();
@@ -28,12 +36,10 @@ index 413e1be..1adb971 100644
 +        return;
 +
 +    window.delete(global.get_current_time());
-+}
-+
+ }
+ 
  // Returns the corner key and target {x, y} for the given corner + offset.
- function cornerPosition(corner, offset, workArea, frameRect) {
-     switch (corner) {
-@@ -191,6 +206,7 @@ export default class AutoPiPManager extends Extension {
+@@ -190,6 +209,7 @@ export default class AutoPiPManager extends Extension {
          this._dragStartRects = new WeakMap();
          this._dragStartTimes = new WeakMap();
          this._grabOps = new WeakMap();
@@ -41,7 +47,7 @@ index 413e1be..1adb971 100644
  
          this._windowCreatedId = global.display.connect('window-created', (_display, window) => {
              const id = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-@@ -199,17 +215,7 @@ export default class AutoPiPManager extends Extension {
+@@ -198,17 +218,7 @@ export default class AutoPiPManager extends Extension {
                  if (!isPiP(window))
                      return GLib.SOURCE_REMOVE;
  
@@ -60,7 +66,7 @@ index 413e1be..1adb971 100644
  
                  return GLib.SOURCE_REMOVE;
              });
-@@ -257,6 +263,61 @@ export default class AutoPiPManager extends Extension {
+@@ -256,6 +266,95 @@ export default class AutoPiPManager extends Extension {
  
              rememberWindowMonitor(window, this._settings);
          });
@@ -81,27 +87,44 @@ index 413e1be..1adb971 100644
 +        if (this._trackedWindows.has(window))
 +            return;
 +
++        const signalIds = {
++            minimizedId: null,
++            unmanagedId: null,
++            actor: null,
++            firstFrameId: null,
++        };
++        this._trackedWindows.set(window, signalIds);
++
 +        hidePiPFromWindowList(window);
 +        applyPiPAttributes(window, this._settings);
 +
 +        if (!this._moveToPiPCorner(window)) {
 +            const actor = window.get_compositor_private();
 +            if (actor) {
-+                const frameId = actor.connect('first-frame', () => {
-+                    actor.disconnect(frameId);
++                signalIds.actor = actor;
++                signalIds.firstFrameId = actor.connect('first-frame', () => {
++                    try {
++                        actor.disconnect(signalIds.firstFrameId);
++                    } catch (_e) {
++                        // Actor may already be destroyed; ignore.
++                    }
++                    signalIds.firstFrameId = null;
++                    signalIds.actor = null;
++
++                    if (!this._settings || !this._trackedWindows.has(window))
++                        return;
++
 +                    this._moveToPiPCorner(window);
 +                });
 +            }
 +        }
 +
-+        const minimizedId = window.connect('notify::minimized', () => {
++        signalIds.minimizedId = window.connect('notify::minimized', () => {
 +            closeMinimizedPiPWindow(window);
 +        });
-+        const unmanagedId = window.connect('unmanaged', () => {
++        signalIds.unmanagedId = window.connect('unmanaged', () => {
 +            this._untrackPiPWindow(window);
 +        });
-+
-+        this._trackedWindows.set(window, { minimizedId, unmanagedId });
 +    }
 +
 +    _untrackPiPWindow(window) {
@@ -109,8 +132,25 @@ index 413e1be..1adb971 100644
 +        if (!signalIds)
 +            return;
 +
-+        window.disconnect(signalIds.minimizedId);
-+        window.disconnect(signalIds.unmanagedId);
++        try {
++            window.disconnect(signalIds.minimizedId);
++        } catch (_e) {
++            // Window may already be unmanaged; ignore.
++        }
++        try {
++            window.disconnect(signalIds.unmanagedId);
++        } catch (_e) {
++            // Window may already be unmanaged; ignore.
++        }
++        if (signalIds.actor && signalIds.firstFrameId) {
++            try {
++                signalIds.actor.disconnect(signalIds.firstFrameId);
++            } catch (_e) {
++                // Actor may already be destroyed; ignore.
++            }
++            signalIds.firstFrameId = null;
++            signalIds.actor = null;
++        }
 +        this._trackedWindows.delete(window);
 +    }
 +
@@ -122,7 +162,7 @@ index 413e1be..1adb971 100644
      }
  
      _moveToPiPCorner(window) {
-@@ -389,6 +450,18 @@ export default class AutoPiPManager extends Extension {
+@@ -388,6 +487,18 @@ export default class AutoPiPManager extends Extension {
          this._dragStartTimes = null;
          this._grabOps = null;
  

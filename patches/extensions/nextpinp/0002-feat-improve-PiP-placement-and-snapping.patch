@@ -1,14 +1,14 @@
-From 2fd3bb751f9a974506ed67cb74a3171b67541b47 Mon Sep 17 00:00:00 2001
+From d8022d6984315951dc1d469491dd402980556104 Mon Sep 17 00:00:00 2001
 From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 22:31:56 +0200
 Subject: [PATCH 2/3] feat: improve PiP placement and snapping
 
 ---
- extension.js | 297 +++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 264 insertions(+), 33 deletions(-)
+ extension.js | 296 +++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 263 insertions(+), 33 deletions(-)
 
 diff --git a/extension.js b/extension.js
-index c0f65af..413e1be 100644
+index c0f65af..24aa6a4 100644
 --- a/extension.js
 +++ b/extension.js
 @@ -1,7 +1,12 @@
@@ -24,7 +24,7 @@ index c0f65af..413e1be 100644
  const PIP_TITLES = [
      'picture-in-picture',
      'picture in picture',
-@@ -62,50 +67,130 @@ function cornerPosition(corner, offset, workArea, frameRect) {
+@@ -62,50 +67,129 @@ function cornerPosition(corner, offset, workArea, frameRect) {
      }
  }
  
@@ -79,8 +79,7 @@ index c0f65af..413e1be 100644
 +    if (settings.get_boolean('remember-monitor')) {
 +        const remembered = findRememberedMonitor(settings);
 +        if (remembered >= 0 && remembered < global.display.get_n_monitors()) {
-+            const workspace = global.workspace_manager.get_workspace_by_index(0);
-+            return workspace.get_work_area_for_monitor(remembered);
++            return window.get_work_area_for_monitor(remembered);
 +        }
 +    }
 +
@@ -184,7 +183,7 @@ index c0f65af..413e1be 100644
  
          this._windowCreatedId = global.display.connect('window-created', (_display, window) => {
              const id = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-@@ -116,12 +201,12 @@ export default class AutoPiPManager extends Extension {
+@@ -116,12 +200,12 @@ export default class AutoPiPManager extends Extension {
  
                  applyPiPAttributes(window, this._settings);
  
@@ -199,7 +198,7 @@ index c0f65af..413e1be 100644
                          });
                      }
                  }
-@@ -131,7 +216,18 @@ export default class AutoPiPManager extends Extension {
+@@ -131,7 +215,18 @@ export default class AutoPiPManager extends Extension {
              this._pendingIdles.add(id);
          });
  
@@ -219,7 +218,7 @@ index c0f65af..413e1be 100644
          this._grabOpEndId = global.display.connect('grab-op-end', (_display, window, op) => {
              if (!window)
                  return;
-@@ -139,16 +235,147 @@ export default class AutoPiPManager extends Extension {
+@@ -139,16 +234,147 @@ export default class AutoPiPManager extends Extension {
                  return;
              if (!isPiP(window))
                  return;
@@ -368,7 +367,7 @@ index c0f65af..413e1be 100644
          if (this._grabOpEndId) {
              global.display.disconnect(this._grabOpEndId);
              this._grabOpEndId = null;
-@@ -158,6 +385,10 @@ export default class AutoPiPManager extends Extension {
+@@ -158,6 +384,10 @@ export default class AutoPiPManager extends Extension {
              GLib.source_remove(id);
          this._pendingIdles = null;
  
