@@ -14,7 +14,7 @@ index f246521..02da5cc 100644
 @@ -189,6 +189,13 @@ export const PanelBlur = class PanelBlur {
              this.blur_panel(panel);
      }
- 
+
 +    /// Find the monitor assigned to a panel.
 +    find_panel_monitor(panel) {
 +        const monitor_index = panel.get_parent()?._dtpIndex;
@@ -28,15 +28,15 @@ index f246521..02da5cc 100644
 @@ -202,7 +209,7 @@ export const PanelBlur = class PanelBlur {
              panel_box = panel_box.get_parent();
          }
- 
+
 -        let monitor = Main.layoutManager.findMonitorForActor(panel);
 +        let monitor = this.find_panel_monitor(panel);
          if (!monitor)
              return;
- 
+
 @@ -354,26 +361,22 @@ export const PanelBlur = class PanelBlur {
      }
- 
+
      update_size(actors) {
 +        let panel = actors.widgets.panel;
          let geometry_actor = actors.widgets.geometry_actor;
@@ -46,13 +46,13 @@ index f246521..02da5cc 100644
          let [width, height] = panel_box.get_size();
          let [geometry_width, geometry_height] = geometry_actor.get_size();
 +        let monitor = this.find_panel_monitor(panel);
- 
+
 -        if (!width || !height || !geometry_width || !geometry_height) {
 +        if (!width || !height || !geometry_width || !geometry_height || !monitor) {
              this.queue_update_size(actors);
              return;
          }
- 
+
          // if static blur, need to clip the background
          if (actors.static_blur) {
 -            let monitor = Main.layoutManager.findMonitorForActor(geometry_actor);
@@ -63,15 +63,15 @@ index f246521..02da5cc 100644
 -
              let [p_x, p_y] = panel_box.get_position();
              let [p_p_x, p_p_y] = panel_box.get_parent().get_position();
- 
+
 @@ -426,7 +429,7 @@ export const PanelBlur = class PanelBlur {
          }
- 
+
          // update the monitor panel is on
 -        actors.monitor = Main.layoutManager.findMonitorForActor(geometry_actor);
 +        actors.monitor = monitor;
      }
- 
+
      /// Connect when overview if opened/closed to hide/show the blur accordingly
--- 
+--
 2.43.0
