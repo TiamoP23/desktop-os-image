@@ -70,5 +70,13 @@ name=''
 [org/gnome/shell/extensions/add-to-steam]
 use-nautilus=false
 
-[org/gnome/shell/extensions/nextpinp]
+[org/gnome/shell/extensions/auto-pip-manager]
+always-on-all-workspaces=true
+always-on-top=true
 corner='top-right'
+offset=20
+remember-corner=true
+remember-monitor=true
+snap-animation=true
+snap-animation-duration=180
+velocity-throw=true

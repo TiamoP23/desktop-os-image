@@ -24,5 +24,4 @@
 - id: nextpinp
   type: gnome-extension
   install_dir: usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin
-  build_output: .
   post_install_command: glib-compile-schemas "$COMPONENT_DEST/schemas"
