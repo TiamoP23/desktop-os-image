@@ -463,10 +463,6 @@ Create `scripts/test-nextpinp-source.sh`:
 #!/usr/bin/env bash
 set -euo pipefail
 
-source_dir="bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin"
-extension_file="$source_dir/extension.js"
-prefs_file="$source_dir/prefs.js"
-schema_file="$source_dir/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml"
 defaults_file="bluebuild/files/static/system/etc/dconf/db/local.d/00-zorin-like-shell"
 
 require_source() {
@@ -479,14 +475,6 @@ require_source() {
   fi
 }
 
-require_source "$schema_file" 'name="remember-monitor"' 'remember-monitor schema key'
-require_source "$schema_file" 'name="snap-animation"' 'snap-animation schema key'
-require_source "$prefs_file" "'velocity-throw'" 'velocity preference'
-require_source "$extension_file" 'get_work_area_for_monitor(remembered)' 'workspace monitor work area'
-require_source "$extension_file" 'DIAGONAL_AXIS_RATIO' 'diagonal velocity classification'
-require_source "$extension_file" 'hide_from_window_list' 'window-list hiding'
-require_source "$extension_file" "window.connect('notify::minimized'" 'minimize lifecycle handling'
-require_source "$extension_file" 'window.delete(global.get_current_time())' 'minimize-to-close behavior'
 require_source "$defaults_file" '[org/gnome/shell/extensions/auto-pip-manager]' 'correct dconf schema path'
 require_source "$defaults_file" 'remember-monitor=true' 'remember-monitor image default'
 
@@ -505,7 +493,8 @@ bash scripts/prepare-components.sh nextpinp
 bash scripts/test-nextpinp-source.sh
 ```
 
-Expected: rendering succeeds; the test exits 1 because upstream lacks `remember-monitor`.
+Expected: rendering succeeds; the test exits 1 because the manifest still uses
+`build_output: .` or the dconf file still uses the wrong schema path.
 
 - [ ] **Step 3: Correct the source-only manifest and dconf defaults**
 
@@ -586,9 +575,15 @@ test -f bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leon
 test -f bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/schemas/gschemas.compiled
 ```
 
-Expected: all commands exit 0. The behavior test still fails because the custom queue is added in Task 5.
+Then run:
 
-- [ ] **Step 6: Commit packaging, defaults, docs, and the failing regression test**
+```bash
+bash scripts/test-nextpinp-source.sh
+```
+
+Expected: all commands exit 0, including the packaging/default regression test.
+
+- [ ] **Step 6: Commit packaging, defaults, docs, and the passing regression test**
 
 Run:
 
@@ -603,6 +598,7 @@ git commit -m "feat: finalize next pip image integration"
 - Create: `patches/extensions/nextpinp/0001-feat-add-remembered-PiP-placement-settings.patch`
 - Create: `patches/extensions/nextpinp/0002-feat-improve-PiP-placement-and-snapping.patch`
 - Create: `patches/extensions/nextpinp/0003-fix-manage-PiP-window-lifecycle.patch`
+- Modify: `scripts/test-nextpinp-source.sh`
 - Modify through patch branch: `vendor/extensions/nextpinp/prefs.js`
 - Modify through patch branch: `vendor/extensions/nextpinp/extension.js`
 - Modify through patch branch: `vendor/extensions/nextpinp/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml`
@@ -611,7 +607,44 @@ git commit -m "feat: finalize next pip image integration"
 - Consumes: the five tested patches stored in commit `1df23c3` and clean Next PIP base `b6d29fa`.
 - Produces: the same final source as the locally installed test copy, represented by three coherent commits and three exported patches.
 
-- [ ] **Step 1: Start a clean Next PIP edit session before restoring old patches**
+- [ ] **Step 1: Extend the source test with custom behavior assertions**
+
+Add these variables after `set -euo pipefail` in
+`scripts/test-nextpinp-source.sh`:
+
+```bash
+source_dir="bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin"
+extension_file="$source_dir/extension.js"
+prefs_file="$source_dir/prefs.js"
+schema_file="$source_dir/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml"
+```
+
+Add these assertions after the existing manifest/default checks:
+
+```bash
+require_source "$schema_file" 'name="remember-monitor"' 'remember-monitor schema key'
+require_source "$schema_file" 'name="snap-animation"' 'snap-animation schema key'
+require_source "$prefs_file" "'velocity-throw'" 'velocity preference'
+require_source "$extension_file" 'get_work_area_for_monitor(remembered)' 'workspace monitor work area'
+require_source "$extension_file" 'DIAGONAL_AXIS_RATIO' 'diagonal velocity classification'
+require_source "$extension_file" 'hide_from_window_list' 'window-list hiding'
+require_source "$extension_file" "window.connect('notify::minimized'" 'minimize lifecycle handling'
+require_source "$extension_file" 'window.delete(global.get_current_time())' 'minimize-to-close behavior'
+```
+
+- [ ] **Step 2: Run the behavior test to verify it fails against upstream**
+
+Run:
+
+```bash
+bash scripts/prepare-components.sh nextpinp
+bash scripts/test-nextpinp-source.sh
+```
+
+Expected: rendering succeeds and the test exits 1 with
+`Missing Next PIP behavior: remember-monitor schema key`.
+
+- [ ] **Step 3: Start a clean Next PIP edit session before restoring old patches**
 
 Run:
 
@@ -621,7 +654,7 @@ just component-edit nextpinp patch/nextpinp-refresh
 
 Expected: the edit branch starts at `b6d29fa` and no patches are replayed.
 
-- [ ] **Step 2: Restore the five tested source patches from the prior branch commit**
+- [ ] **Step 4: Restore the five tested source patches from the prior branch commit**
 
 Run:
 
@@ -631,7 +664,7 @@ git restore --source=1df23c3 -- patches/extensions/nextpinp
 
 Expected: exactly five old patch files appear under `patches/extensions/nextpinp/`; no other file is restored.
 
-- [ ] **Step 3: Apply and commit the settings patch**
+- [ ] **Step 5: Apply and commit the settings patch**
 
 Run:
 
@@ -643,7 +676,7 @@ git -C vendor/extensions/nextpinp commit -m "feat: add remembered PiP placement 
 
 Expected: one commit changes only `prefs.js` and the schema.
 
-- [ ] **Step 4: Apply and commit placement, work-area, and diagonal fixes together**
+- [ ] **Step 6: Apply and commit placement, work-area, and diagonal fixes together**
 
 Run:
 
@@ -682,7 +715,7 @@ Expected: one commit contains remembered-monitor placement,
 `get_work_area_for_monitor(remembered)`, snap animation, and
 `DIAGONAL_AXIS_RATIO`.
 
-- [ ] **Step 5: Apply and commit lifecycle handling**
+- [ ] **Step 7: Apply and commit lifecycle handling**
 
 Run:
 
@@ -694,7 +727,7 @@ git -C vendor/extensions/nextpinp commit -m "fix: manage PiP window lifecycle"
 
 Expected: one commit adds existing-window management, window-list hiding, settings-change reapplication, `notify::minimized`, and minimize-to-close behavior.
 
-- [ ] **Step 6: Validate the patch-branch source before export**
+- [ ] **Step 8: Validate the patch-branch source before export**
 
 Run:
 
@@ -706,7 +739,7 @@ git -C vendor/extensions/nextpinp log --oneline b6d29fa..HEAD
 
 Expected: schema and diff checks exit 0; the log contains exactly the three commits created in Steps 3-5.
 
-- [ ] **Step 7: Export the three-patch queue and render Next PIP**
+- [ ] **Step 9: Export the three-patch queue and render Next PIP**
 
 Run:
 
@@ -716,7 +749,7 @@ just component-finish nextpinp
 
 Expected: old patch files are replaced by exactly three numbered patches, the submodule returns to detached `b6d29fa`, and rendering succeeds.
 
-- [ ] **Step 8: Run the behavior test and compare with the locally tested source**
+- [ ] **Step 10: Run the behavior test and compare with the locally tested source**
 
 Run:
 
@@ -729,12 +762,12 @@ diff -u /home/tiamop23/.local/share/gnome-shell/extensions/nextpinp@leonid.nased
 
 Expected: the source test exits 0 and all three diffs produce no output.
 
-- [ ] **Step 9: Commit the rebuilt Next PIP queue**
+- [ ] **Step 11: Commit the rebuilt Next PIP queue and behavior test**
 
 Run:
 
 ```bash
-git add patches/extensions/nextpinp
+git add patches/extensions/nextpinp scripts/test-nextpinp-source.sh
 git commit -m "feat: preserve tested next pip behavior"
 ```
 
