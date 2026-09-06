@@ -36,6 +36,14 @@ jobs:
       - name: Prepare generated tree
         run: bash ./scripts/prepare-components.sh
 
+      - name: Test extension sources and pins
+        run: |
+          bash ./scripts/test-component-pins.sh
+          bash ./scripts/test-dash-to-panel-source.sh
+          bash ./scripts/test-blur-my-shell-source.sh
+          bash ./scripts/test-nextpinp-source.sh
+          bash ./scripts/test-extension-metadata.sh
+
       - name: Check shell scripts
         run: bash -n scripts/*.sh bluebuild/files/static/scripts/*.sh
 
