@@ -668,7 +668,7 @@ Run:
 git restore --source=1df23c3 -- patches/extensions/nextpinp
 ```
 
-Expected: exactly five old patch files appear under `patches/extensions/nextpinp/`; no other file is restored.
+Expected: exactly five old patch files appear under `patches/extensions/nextpinp/`; no other file is restored. These are the five historical patches from commit `1df23c3`, not the final filenames. Steps 5-7 intentionally apply four of them: the fifth diagonal-velocity fix is reproduced directly in the placement commit so the final queue contains exactly three coherent patches.
 
 - [ ] **Step 5: Apply and commit the settings patch**
 
@@ -731,7 +731,7 @@ git -C vendor/extensions/nextpinp add extension.js
 git -C vendor/extensions/nextpinp commit -m "fix: manage PiP window lifecycle"
 ```
 
-Expected: one commit adds existing-window management, window-list hiding, settings-change reapplication, `notify::minimized`, and minimize-to-close behavior.
+Expected: one commit adds existing-window management, window-list hiding, settings-change reapplication, `notify::minimized`, and minimize-to-close behavior. The historical fifth patch is intentionally not applied as a file here because its diagonal fix was reproduced directly in Step 6.
 
 - [ ] **Step 8: Validate the patch-branch source before export**
 
@@ -743,7 +743,7 @@ git -C vendor/extensions/nextpinp diff --check b6d29fa..HEAD
 git -C vendor/extensions/nextpinp log --oneline b6d29fa..HEAD
 ```
 
-Expected: schema and diff checks exit 0; the log contains exactly the three commits created in Steps 3-5.
+Expected: schema and diff checks exit 0; the log contains exactly the three commits created in Steps 5-7.
 
 - [ ] **Step 9: Export the three-patch queue and render Next PIP**
 
@@ -761,15 +761,16 @@ Run:
 
 ```bash
 bash scripts/test-nextpinp-source.sh
-diff -u /home/tiamop23/.local/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/extension.js bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/extension.js
 diff -u /home/tiamop23/.local/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/prefs.js bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/prefs.js
 diff -u /home/tiamop23/.local/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin/schemas/org.gnome.shell.extensions.auto-pip-manager.gschema.xml
 ```
 
-Expected: the source test exits 0 and all three diffs produce no output.
-This comparison records the initial Task 5 baseline only; the final-review
-corrections documented above intentionally make the rendered `extension.js`
-different from that local test copy.
+Expected: the source test exits 0 and both prefs/schema diffs produce no
+output; those files remain byte-identical to the local baseline. The
+`extension.js` comparison was initial evidence only and is superseded by
+commits `688fb73` plus the disable-time restoration in this feedback fix.
+The behavior test is the current acceptance check for extension runtime
+behavior.
 
 - [ ] **Step 11: Commit the rebuilt Next PIP queue and behavior test**
 
@@ -891,13 +892,11 @@ Expected: both commands exit 0 and every submodule reports a clean detached chec
 Run:
 
 ```bash
-bash scripts/prepare-components.sh
-git status --short bluebuild/files/generated
-bash scripts/prepare-components.sh
-git status --short bluebuild/files/generated
+bash scripts/test-render-determinism.sh
 ```
 
-Expected: both status commands produce no tracked changes because generated content is ignored; the second render exits 0 without altering source or patch files.
+Expected: the script exits 0 and reports the same normalized matching hash for
+both renders; source and patch files are unaltered.
 
 - [ ] **Step 3: Run the complete local validation suite**
 

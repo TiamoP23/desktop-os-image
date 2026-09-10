@@ -33,6 +33,20 @@ require_source "$extension_file" 'DIAGONAL_AXIS_RATIO' 'diagonal velocity classi
 require_source "$extension_file" 'hide_from_window_list' 'window-list hiding'
 require_source "$extension_file" "window.connect('notify::minimized'" 'minimize lifecycle handling'
 require_source "$extension_file" 'window.delete(global.get_current_time())' 'minimize-to-close behavior'
+require_source "$extension_file" 'originalAbove: window.is_above()' 'record original always-on-top state'
+require_source "$extension_file" 'originalAllWorkspaces: window.is_on_all_workspaces()' 'record original workspace state'
+require_source "$extension_file" 'originalSkipTaskbar: window.is_skip_taskbar()' 'record original window-list state'
+require_source "$extension_file" 'this._restorePiPWindow(window, signalIds)' 'restore managed window state on disable'
+require_source "$extension_file" 'if (!signalIds.originalSkipTaskbar)' 'restore window-list visibility conditionally'
+require_source "$extension_file" 'window.show_in_window_list?.()' 'inverse window-list hiding'
+
+restore_calls="$(grep -Fc 'this._restorePiPWindow(window, signalIds)' "$extension_file")"
+if [[ "$restore_calls" -ne 1 ]]; then
+  printf 'Expected exactly one disable-only PiP restoration call, found %s\n' "$restore_calls" >&2
+  exit 1
+fi
+
+require_source "$extension_file" 'this._untrackPiPWindow(window);' 'unmanaged callback only untracks windows'
 
 if grep -Fq 'build_output: .' manifests/components.yml; then
   printf 'Next PIP must render through source-tree mode, not build_output=.\n' >&2

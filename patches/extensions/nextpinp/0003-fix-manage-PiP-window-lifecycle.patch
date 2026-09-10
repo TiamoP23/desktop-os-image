@@ -5,7 +5,7 @@ Subject: [PATCH 3/3] fix: manage PiP window lifecycle
 
 ---
  extension.js | 133 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 122 insertions(+), 11 deletions(-)
+ 1 file changed, 146 insertions(+), 11 deletions(-)
 
 diff --git a/extension.js b/extension.js
 index 24aa6a4..edf4681 100644
@@ -66,7 +66,7 @@ index 24aa6a4..edf4681 100644
  
                  return GLib.SOURCE_REMOVE;
              });
-@@ -256,6 +266,95 @@ export default class AutoPiPManager extends Extension {
+@@ -256,6 +266,118 @@ export default class AutoPiPManager extends Extension {
  
              rememberWindowMonitor(window, this._settings);
          });
@@ -88,6 +88,9 @@ index 24aa6a4..edf4681 100644
 +            return;
 +
 +        const signalIds = {
++            originalAbove: window.is_above(),
++            originalAllWorkspaces: window.is_on_all_workspaces(),
++            originalSkipTaskbar: window.is_skip_taskbar(),
 +            minimizedId: null,
 +            unmanagedId: null,
 +            actor: null,
@@ -154,6 +157,26 @@ index 24aa6a4..edf4681 100644
 +        this._trackedWindows.delete(window);
 +    }
 +
++    _restorePiPWindow(window, signalIds) {
++        if (signalIds.originalAbove)
++            window.make_above();
++        else
++            window.unmake_above();
++
++        if (signalIds.originalAllWorkspaces)
++            window.stick();
++        else
++            window.unstick();
++
++        if (!signalIds.originalSkipTaskbar) {
++            try {
++                window.show_in_window_list?.();
++            } catch (_e) {
++                // Some Mutter versions may not expose this method to extensions.
++            }
++        }
++    }
++
 +    _reapplyPiPAttributes() {
 +        for (const window of this._trackedWindows.keys()) {
 +            applyPiPAttributes(window, this._settings);
@@ -162,7 +185,7 @@ index 24aa6a4..edf4681 100644
      }
  
      _moveToPiPCorner(window) {
-@@ -388,6 +487,18 @@ export default class AutoPiPManager extends Extension {
+@@ -388,6 +487,20 @@ export default class AutoPiPManager extends Extension {
          this._dragStartTimes = null;
          this._grabOps = null;
  
@@ -173,8 +196,10 @@ index 24aa6a4..edf4681 100644
 +        }
 +
 +        if (this._trackedWindows) {
-+            for (const window of [...this._trackedWindows.keys()])
++            for (const [window, signalIds] of this._trackedWindows.entries()) {
++                this._restorePiPWindow(window, signalIds);
 +                this._untrackPiPWindow(window);
++            }
 +            this._trackedWindows = null;
 +        }
 +
@@ -183,4 +208,3 @@ index 24aa6a4..edf4681 100644
  }
 -- 
 2.54.0
-
