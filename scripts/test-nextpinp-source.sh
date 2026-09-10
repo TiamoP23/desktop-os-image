@@ -48,6 +48,53 @@ from pathlib import Path
 source = Path(sys.argv[1]).read_text()
 
 
+def strip_comments(text):
+    result = []
+    index = 0
+    quote = None
+    escaped = False
+    while index < len(text):
+        char = text[index]
+        next_char = text[index + 1] if index + 1 < len(text) else ""
+        if quote:
+            result.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            index += 1
+            continue
+        if char in "'\"`":
+            quote = char
+            result.append(char)
+            index += 1
+        elif char == "/" and next_char == "/":
+            result.extend(" " for _ in (char, next_char))
+            index += 2
+            while index < len(text) and text[index] != "\n":
+                result.append(" ")
+                index += 1
+        elif char == "/" and next_char == "*":
+            result.extend(" " for _ in (char, next_char))
+            index += 2
+            while index < len(text):
+                if text[index] == "*" and index + 1 < len(text) and text[index + 1] == "/":
+                    result.extend("  ")
+                    index += 2
+                    break
+                result.append("\n" if text[index] == "\n" else " ")
+                index += 1
+        else:
+            result.append(char)
+            index += 1
+    return "".join(result)
+
+
+source = strip_comments(source)
+
+
 def block_after(label, pattern, text):
     match = re.search(pattern, text, re.MULTILINE)
     if not match:
@@ -93,7 +140,6 @@ def block_after(label, pattern, text):
 
 
 def compact(text):
-    text = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.DOTALL)
     return re.sub(r"\s+", "", text)
 
 
@@ -103,9 +149,13 @@ if compact(unmanaged) != "this._untrackPiPWindow(window);":
     raise SystemExit("Unmanaged Next PIP callback must only untrack the window")
 
 disable = block_after("disable method", r"^    disable\(\)\s*\{", source)
-loop = block_after("disable tracked-window loop", r"for\s*\(const\s+window\s+of\s+this\._trackedWindows\.keys\(\)\)\s*\{", disable)
-if compact(loop) != "this._restorePiPWindow(window);this._untrackPiPWindow(window);":
-    raise SystemExit("Disable tracked-window loop must only restore then untrack each window")
+if_matches = list(re.finditer(r"^        if\s*\(this\._trackedWindows\)\s*\{", disable, re.MULTILINE))
+if len(if_matches) != 1:
+    raise SystemExit("Disable method must contain exactly one direct tracked-window guard")
+tracked = block_after("disable tracked-window guard", r"^        if\s*\(this\._trackedWindows\)\s*\{", disable)
+expected = "for(constwindowof[...this._trackedWindows.keys()]){this._restorePiPWindow(window);this._untrackPiPWindow(window);}this._trackedWindows=null;"
+if compact(tracked) != expected:
+    raise SystemExit("Disable tracked-window guard must contain only the direct restore/untrack loop and cleanup")
 PY
 
 if grep -Fq 'build_output: .' manifests/components.yml; then
