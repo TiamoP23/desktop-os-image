@@ -1,14 +1,14 @@
-From 2d6fa6cb112da1b8df279e92693f70021d927437 Mon Sep 17 00:00:00 2001
+From 8b235b473c3619a77fd16d2361c6ebd90525349a Mon Sep 17 00:00:00 2001
 From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
-Date: Sun, 6 Sep 2026 22:32:01 +0200
+Date: Thu, 10 Sep 2026 22:51:01 +0200
 Subject: [PATCH 3/3] fix: manage PiP window lifecycle
 
 ---
- extension.js | 133 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 146 insertions(+), 11 deletions(-)
+ extension.js | 162 +++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 151 insertions(+), 11 deletions(-)
 
 diff --git a/extension.js b/extension.js
-index 24aa6a4..edf4681 100644
+index 24aa6a4..3cb1827 100644
 --- a/extension.js
 +++ b/extension.js
 @@ -39,8 +39,27 @@ function isPiP(window) {
@@ -66,7 +66,7 @@ index 24aa6a4..edf4681 100644
  
                  return GLib.SOURCE_REMOVE;
              });
-@@ -256,6 +266,118 @@ export default class AutoPiPManager extends Extension {
+@@ -256,6 +266,122 @@ export default class AutoPiPManager extends Extension {
  
              rememberWindowMonitor(window, this._settings);
          });
@@ -157,7 +157,11 @@ index 24aa6a4..edf4681 100644
 +        this._trackedWindows.delete(window);
 +    }
 +
-+    _restorePiPWindow(window, signalIds) {
++    _restorePiPWindow(window) {
++        const signalIds = this._trackedWindows.get(window);
++        if (!signalIds)
++            return;
++
 +        if (signalIds.originalAbove)
 +            window.make_above();
 +        else
@@ -185,7 +189,7 @@ index 24aa6a4..edf4681 100644
      }
  
      _moveToPiPCorner(window) {
-@@ -388,6 +487,20 @@ export default class AutoPiPManager extends Extension {
+@@ -388,6 +514,20 @@ export default class AutoPiPManager extends Extension {
          this._dragStartTimes = null;
          this._grabOps = null;
  
@@ -196,8 +200,8 @@ index 24aa6a4..edf4681 100644
 +        }
 +
 +        if (this._trackedWindows) {
-+            for (const [window, signalIds] of this._trackedWindows.entries()) {
-+                this._restorePiPWindow(window, signalIds);
++            for (const window of this._trackedWindows.keys()) {
++                this._restorePiPWindow(window);
 +                this._untrackPiPWindow(window);
 +            }
 +            this._trackedWindows = null;
@@ -208,3 +212,4 @@ index 24aa6a4..edf4681 100644
  }
 -- 
 2.54.0
+
