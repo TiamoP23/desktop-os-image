@@ -95,11 +95,12 @@ def strip_comments(text):
 source = strip_comments(source)
 
 
-def block_after(label, pattern, text):
-    match = re.search(pattern, text, re.MULTILINE)
-    if not match:
-        raise SystemExit(f"Missing Next PIP structure: {label}")
-    opening = text.find("{", match.start())
+def block_after(label, pattern, text, opening=None):
+    if opening is None:
+        match = re.search(pattern, text, re.MULTILINE)
+        if not match:
+            raise SystemExit(f"Missing Next PIP structure: {label}")
+        opening = text.find("{", match.start())
     depth = 0
     quote = None
     escaped = False
@@ -149,10 +150,36 @@ if compact(unmanaged) != "this._untrackPiPWindow(window);":
     raise SystemExit("Unmanaged Next PIP callback must only untrack the window")
 
 disable = block_after("disable method", r"^    disable\(\)\s*\{", source)
-if_matches = list(re.finditer(r"^        if\s*\(this\._trackedWindows\)\s*\{", disable, re.MULTILINE))
-if len(if_matches) != 1:
+guard_pattern = re.compile(r"\bif\s*\(\s*this\._trackedWindows\s*\)\s*\{")
+guard_openings = []
+depth = 0
+quote = None
+escaped = False
+for index, char in enumerate(disable):
+    if quote:
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            quote = None
+        continue
+    if char in "'\"`":
+        quote = char
+        continue
+    if depth == 0:
+        match = guard_pattern.match(disable, index)
+        if match:
+            guard_openings.append(disable.find("{", index, match.end()))
+    if char == "{":
+        depth += 1
+    elif char == "}":
+        depth -= 1
+
+if len(guard_openings) != 1:
     raise SystemExit("Disable method must contain exactly one direct tracked-window guard")
-tracked = block_after("disable tracked-window guard", r"^        if\s*\(this\._trackedWindows\)\s*\{", disable)
+tracked_opening = guard_openings[0]
+tracked = block_after("disable tracked-window guard", None, disable, tracked_opening)
 expected = "for(constwindowof[...this._trackedWindows.keys()]){this._restorePiPWindow(window);this._untrackPiPWindow(window);}this._trackedWindows=null;"
 if compact(tracked) != expected:
     raise SystemExit("Disable tracked-window guard must contain only the direct restore/untrack loop and cleanup")
