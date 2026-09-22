@@ -1,6 +1,6 @@
 # desktop-os-image
 
-Manifest-driven BlueBuild repository for a personal Bazzite GNOME 44 image.
+Manifest-driven BlueBuild repository for a personal Bazzite GNOME 50 image.
 
 ## Layout
 
@@ -15,7 +15,7 @@ Manifest-driven BlueBuild repository for a personal Bazzite GNOME 44 image.
 
 ## Image base
 
-The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:44` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
+The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:44.20260902` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
 
 ## Included extensions
 
@@ -23,6 +23,7 @@ The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:44` and layers the 
 - Blur My Shell
 - Coverflow Alt-Tab
 - Clipboard Indicator
+- Next PIP
 
 The repository tracks upstream sources under `vendor/extensions/` and applies local patch queues from `patches/extensions/` before rendering them into `bluebuild/files/generated/`.
 
@@ -36,6 +37,27 @@ Use the `justfile` entrypoints:
 - `just component-edit <component>` starts an edit session against a vendored component.
 - `just component-finish <component>` exports the patch queue and rerenders that component.
 - `just build` and `just switch` defer to the local BlueBuild CLI.
+
+### Test a GNOME extension locally
+
+Render Next PIP and package the generated extension for user-level testing:
+
+```bash
+bash ./scripts/prepare-components.sh nextpinp
+mkdir -p artifacts
+rm -f artifacts/nextpinp@leonid.nasedkin-patched.zip
+(
+  cd bluebuild/files/generated/usr/share/gnome-shell/extensions/nextpinp@leonid.nasedkin
+  zip -qr "$OLDPWD/artifacts/nextpinp@leonid.nasedkin-patched.zip" .
+)
+gnome-extensions install --force artifacts/nextpinp@leonid.nasedkin-patched.zip
+gnome-extensions enable nextpinp@leonid.nasedkin
+```
+
+GNOME Shell caches extension modules by UUID. Log out and back in before
+retesting same-UUID code changes on Wayland. Remove the user copy with
+`gnome-extensions uninstall nextpinp@leonid.nasedkin` before testing the copy
+shipped by an installed image, because user extensions override system ones.
 
 ## Blur My Shell rounded blur helper
 
