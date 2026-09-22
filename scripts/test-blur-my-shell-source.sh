@@ -13,9 +13,14 @@ require_source() {
 }
 
 require_source 'find_panel_monitor(panel) {' 'central monitor resolver'
-require_source 'panel.get_parent()?._dtpIndex' 'Dash to Panel monitor assignment'
+require_source 'panel.get_parent()?.get_parent()?._dtpIndex' 'Dash to Panel panel-box monitor assignment'
 require_source 'Main.layoutManager.monitors[monitor_index]' 'assigned monitor lookup'
 require_source 'Main.layoutManager.findMonitorForActor(panel)' 'non-Dash-to-Panel fallback'
+
+if grep -Fq 'panel.get_parent()?._dtpIndex' "$extension_file"; then
+  printf 'Dash to Panel monitor lookup stops at the wrapper instead of the panel box\n' >&2
+  exit 1
+fi
 
 resolver_calls="$(grep -Fc 'this.find_panel_monitor(panel)' "$extension_file")"
 if [[ "$resolver_calls" -ne 2 ]]; then
