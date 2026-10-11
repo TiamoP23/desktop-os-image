@@ -1,0 +1,103 @@
+From c47ce63b4ee9f645a480c0812285aedac0bfed34 Mon Sep 17 00:00:00 2001
+From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
+Date: Sun, 11 Oct 2026 19:00:00 +0200
+Subject: [PATCH] fix: rebuild panel blur on Dash to Panel takeover
+
+---
+ src/components/panel.js | 45 +++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/src/components/panel.js b/src/components/panel.js
+index 07cc4dbf4064663eaf14845df415c564a37e2acb..38fc6059515578d50e288d97f7dffa6598bbac6f 100644
+--- a/src/components/panel.js
++++ b/src/components/panel.js
+@@ -36,6 +36,8 @@ export const PanelBlur = class PanelBlur {
+         this.queued_updates = new Set();
+         this.enabled = false;
+         this._first_boot = true;
++        this._dtp_panels_object = null;
++        this._dtp_panels_connection = null;
+     }
+ 
+     enable() {
+@@ -54,12 +54,6 @@ export const PanelBlur = class PanelBlur {
+                 if (extension.uuid === DASH_TO_PANEL_UUID
+                     && extension.state === 1
+                 ) {
+-                    this.connections.connect(
+-                        global.dashToPanel,
+-                        'panels-created',
+-                        _ => this.blur_dtp_panels()
+-                    );
+-
+                     this.blur_existing_panels();
+                 }
+             }
+@@ -121,10 +121,31 @@ export const PanelBlur = class PanelBlur {
+     blur_existing_panels() {
+         // check if dash-to-panel is present
+         if (global.dashToPanel) {
++            if (this._dtp_panels_object !== global.dashToPanel) {
++                if (this._dtp_panels_object)
++                    this.connections.disconnect(
++                        this._dtp_panels_object, this._dtp_panels_connection
++                    );
++
++                this._dtp_panels_object = global.dashToPanel;
++                this._dtp_panels_connection = this.connections.connect(
++                    this._dtp_panels_object,
++                    'panels-created',
++                    _ => this.blur_dtp_panels()
++                );
++            }
++
+             // blur already existing ones
+             if (global.dashToPanel.panels)
+                 this.blur_dtp_panels();
+         } else {
++            if (this._dtp_panels_object) {
++                this.connections.disconnect(
++                    this._dtp_panels_object, this._dtp_panels_connection
++                );
++                this._dtp_panels_object = null;
++                this._dtp_panels_connection = null;
++            }
+             // if no dash-to-panel, blur the main panel
+             if (isMainPanelAlive)
+                 this.maybe_blur_panel(Main.panel);
+@@ -147,9 +147,23 @@ export const PanelBlur = class PanelBlur {
+         // during extension startup.
+         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+-            if (!global.dashToPanel?.panels) {
++            if (!this.enabled || !global.dashToPanel?.panels) {
+                 return GLib.SOURCE_REMOVE;
+             }
+ 
++            const needs_reset = global.dashToPanel.panels.some(panel =>
++                this.actors_list.some(actors =>
++                    actors.widgets.panel === panel.panel &&
++                    (actors.widgets.wrapper !== panel ||
++                        (actors.static_blur &&
++                            actors.bg_manager._monitorIndex !== panel.monitor.index))
++                )
++            );
++
++            if (needs_reset) {
++                this.reset();
++                return GLib.SOURCE_REMOVE;
++            }
++
+             this._log("Blurring Dash to Panel panels after idle.");
+     
+             // blur every panel found
+@@ -808,6 +811,8 @@ export const PanelBlur = class PanelBlur {
+         this._dirty = true;
+ 
+         this.connections.disconnect_all();
++        this._dtp_panels_object = null;
++        this._dtp_panels_connection = null;
+ 
+         this.enabled = false;
+     }
+-- 
+2.43.0

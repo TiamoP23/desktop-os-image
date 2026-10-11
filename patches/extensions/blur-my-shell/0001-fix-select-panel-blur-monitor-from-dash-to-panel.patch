@@ -17,7 +17,7 @@ index f246521..02da5cc 100644
 
 +    /// Find the monitor assigned to a panel.
 +    find_panel_monitor(panel) {
-+        const monitor_index = panel.get_parent()?._dtpIndex;
++        const monitor_index = panel.get_parent()?.get_parent()?._dtpIndex;
 +        return Main.layoutManager.monitors[monitor_index]
 +            ?? Main.layoutManager.findMonitorForActor(panel);
 +    }
