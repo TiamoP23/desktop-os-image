@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-extension_file="${BLUR_MY_SHELL_SOURCE_FILE:-bluebuild/files/generated/usr/share/gnome-shell/extensions/blur-my-shell@aunetx/components/panel.js}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+extension_file="${BLUR_MY_SHELL_SOURCE_FILE:-$script_dir/../bluebuild/files/generated/usr/share/gnome-shell/extensions/blur-my-shell@aunetx/components/panel.js}"
 
 require_source() {
   local pattern="$1"
@@ -27,3 +28,5 @@ if [[ "$resolver_calls" -ne 2 ]]; then
   printf 'Expected two monitor resolver calls, found %s\n' "$resolver_calls" >&2
   exit 1
 fi
+
+gjs -m "$script_dir/test-blur-my-shell-takeover.js" "$extension_file"
