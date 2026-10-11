@@ -183,6 +183,11 @@ const utils = {
     },
 };
 
+/**
+ * Create a lightweight background actor for the panel-blur fixture.
+ * @param {string} name Actor name used to identify the fixture background.
+ * @returns {SignalActor} Mock actor with clipping and visibility helpers.
+ */
 function makeBackground(name) {
     const background = new SignalActor(name);
     background.set_clip = (...clip) => {
@@ -197,6 +202,11 @@ function makeBackground(name) {
     return background;
 }
 
+/**
+ * Create a background-manager mock that records its monitor and destruction.
+ * @param {number|undefined} monitorIndex Monitor assignment to expose to assertions.
+ * @returns {object} Manager fixture with pipeline and destroy state.
+ */
 function makeBackgroundManager(monitorIndex) {
     return {
         _monitorIndex: monitorIndex,
@@ -234,11 +244,21 @@ source = source
     .replace('export const PanelBlur = class PanelBlur', 'const PanelBlur = class PanelBlur');
 eval(`${source}\nglobalThis.__PanelBlur = PanelBlur;`);
 
+/**
+ * Fail a regression check with its scenario-specific explanation.
+ * @param {boolean} condition Whether the asserted behavior holds.
+ * @param {string} message Explanation included if the condition is false.
+ * @returns {void}
+ */
 function assert(condition, message) {
     if (!condition)
         throw new Error(`Assertion failed: ${message}`);
 }
 
+/**
+ * Supply the minimal Blur My Shell settings used by each isolated test.
+ * @returns {object} Settings fixture with static panel blur enabled by default.
+ */
 function defaultSettings() {
     return {
         DEBUG: false,
@@ -256,10 +276,19 @@ function defaultSettings() {
     };
 }
 
+/**
+ * Create a panel actor with the geometry expected by the takeover scenarios.
+ * @param {string} name Name identifying this panel fixture.
+ * @returns {SignalActor} Panel actor fixture sized for a 48px taskbar.
+ */
 function makePanel(name) {
     return new SignalActor(name, [0, 0], [2560, 48]);
 }
 
+/**
+ * Install the two-monitor layout used to verify panel-to-monitor assignment.
+ * @returns {Array<object>} Monitor fixtures, with monitor zero marked primary.
+ */
 function setMonitors() {
     const monitors = [
         { index: 0, x: 2560, y: 0, width: 2560, height: 1440 },
@@ -273,6 +302,13 @@ function setMonitors() {
     return monitors;
 }
 
+/**
+ * Link a panel into the monitor-root/panel-box/wrapper hierarchy used by DTP.
+ * @param {SignalActor} panel Panel actor to attach to the fixture hierarchy.
+ * @param {number} monitorIndex Index of the monitor assigned to this panel.
+ * @param {number} monitorX Horizontal origin of the monitor's panel box.
+ * @returns {object} Topology fixture containing the panel and its ancestors.
+ */
 function makeTopology(panel, monitorIndex, monitorX) {
     const root = new SignalActor(`monitor-root-${monitorIndex}`, [0, 0], [5120, 1440]);
     const panelBox = new SignalActor('panelBox', [monitorX, 0], [2560, 1440]);
@@ -292,12 +328,25 @@ function makeTopology(panel, monitorIndex, monitorX) {
     return { panel, wrapper, panelBox, root, monitorIndex, monitorX };
 }
 
+/**
+ * Build a Dash to Panel mock exposing the wrappers from the given topologies.
+ * @param {Array<object>} topologies Panel topology fixtures to register.
+ * @returns {SignalActor} DTP actor mock with its panel wrappers.
+ */
 function makeDashToPanel(topologies) {
     const dtp = new SignalActor('dash-to-panel');
     dtp.panels = topologies.map(topology => topology.wrapper);
     return dtp;
 }
 
+/**
+ * Model an existing Blur My Shell panel actor before takeover or reuse checks.
+ * @param {object} topology Panel topology whose actors populate the stored blur.
+ * @param {SignalActor|null} wrapper DTP wrapper stored with the blur, if any.
+ * @param {boolean} staticBlur Whether the stored background uses static blur.
+ * @param {number|undefined} backgroundMonitorIndex Manager's monitor assignment.
+ * @returns {object} Stored blur actor record with widgets and manager metadata.
+ */
 function makeStoredBlur(topology, wrapper, staticBlur, backgroundMonitorIndex) {
     const backgroundGroup = new Meta.BackgroundGroup({ name: 'old-panel-background-group' });
     const background = makeBackground('old-panel-background');
@@ -320,6 +369,10 @@ function makeStoredBlur(topology, wrapper, staticBlur, backgroundMonitorIndex) {
     };
 }
 
+/**
+ * Reset global mocks and construct a fresh PanelBlur instance for one scenario.
+ * @returns {PanelBlur} Newly initialized extension fixture with default settings.
+ */
 function setup() {
     idleCallbacks.length = 0;
     timeouts.length = 0;
@@ -344,6 +397,11 @@ function setup() {
     return new globalThis.__PanelBlur(new Connections(), defaultSettings(), {});
 }
 
+/**
+ * Count calls to an instance's reset method without changing its reset behavior.
+ * @param {PanelBlur} blur Extension fixture whose resets are being observed.
+ * @returns {() => number} Reader for the number of reset calls so far.
+ */
 function trackResets(blur) {
     let count = 0;
     const reset = blur.reset.bind(blur);
@@ -354,6 +412,11 @@ function trackResets(blur) {
     return () => count;
 }
 
+/**
+ * Run queued idle and timeout callbacks until the asynchronous fixture settles.
+ * @param {number} [maxSteps=100] Maximum callbacks allowed before treating the queue as stuck.
+ * @returns {number} Number of callbacks executed.
+ */
 function drainWorkQueue(maxSteps = 100) {
     let steps = 0;
     while (idleCallbacks.length || timeouts.length) {
@@ -370,6 +433,13 @@ function drainWorkQueue(maxSteps = 100) {
     return steps;
 }
 
+/**
+ * Check rebuilt blur actors match each DTP panel and its assigned monitor.
+ * @param {PanelBlur} blur Extension fixture containing the rebuilt actors.
+ * @param {Array<object>} topologies Expected panel topology fixtures.
+ * @param {string} messagePrefix Scenario label used in assertion failures.
+ * @returns {void}
+ */
 function assertBindings(blur, topologies, messagePrefix) {
     assert(blur.actors_list.length === topologies.length,
         `${messagePrefix}: expected one blur actor per Dash to Panel panel`);
@@ -393,10 +463,21 @@ function assertBindings(blur, topologies, messagePrefix) {
     }
 }
 
+/**
+ * Require exactly one panels-created subscription on a DTP mock.
+ * @param {SignalActor} dtp Dash to Panel actor mock to inspect.
+ * @param {string} message Explanation used if the listener count is wrong.
+ * @returns {void}
+ */
 function assertSingleDtpListener(dtp, message) {
     assert(dtp.countSignal('panels-created') === 1, message);
 }
 
+/**
+ * Verify takeover rebuilds stale actors and remains stable through DTP events,
+ * geometry changes, and replacement wrapper objects.
+ * @returns {void}
+ */
 function testTakeoverRebuildsAndRemainsStable() {
     const blur = setup();
     const primary = Main.panel;
@@ -479,6 +560,10 @@ function testTakeoverRebuildsAndRemainsStable() {
         'replacement DTP event must not add another listener');
 }
 
+/**
+ * Verify a correctly bound static main-panel blur is reused without rebuilding.
+ * @returns {void}
+ */
 function testCorrectStaticBindingIsReusedForMainPanel() {
     const blur = setup();
     const topology = makeTopology(Main.panel, 0, 2560);
@@ -498,6 +583,10 @@ function testCorrectStaticBindingIsReusedForMainPanel() {
     assertSingleDtpListener(dtp, 'reusing a correct binding must retain one listener');
 }
 
+/**
+ * Verify static blur on the wrong monitor is reset despite a matching wrapper.
+ * @returns {void}
+ */
 function testWrongStaticMonitorResetsEvenWithCorrectWrapper() {
     const blur = setup();
     const topology = makeTopology(Main.panel, 0, 2560);
@@ -518,6 +607,10 @@ function testWrongStaticMonitorResetsEvenWithCorrectWrapper() {
         'static monitor mismatch reset must reconnect exactly one DTP listener');
 }
 
+/**
+ * Verify dynamic blur reuses a correct wrapper without static monitor metadata.
+ * @returns {void}
+ */
 function testDynamicBlurDoesNotRequireMonitorIndex() {
     const blur = setup();
     const topology = makeTopology(Main.panel, 0, 2560);
@@ -538,6 +631,10 @@ function testDynamicBlurDoesNotRequireMonitorIndex() {
     'dynamic background without _monitorIndex must not trigger a reset');
 }
 
+/**
+ * Verify disabling before the queued DTP callback prevents blur creation.
+ * @returns {void}
+ */
 function testPendingIdleDoesNothingAfterDisable() {
     const blur = setup();
     const topology = makeTopology(Main.panel, 0, 2560);
