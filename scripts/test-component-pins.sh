@@ -21,13 +21,13 @@ assert_file_contains() {
   fi
 }
 
-assert_head vendor/extensions/dash-to-panel df8a15bac1e5e9fb2b4c5f2407981bd8365a72c4
-assert_head vendor/extensions/blur-my-shell b689b991c9a60098818f0dd3772bc9c7a83bbbcb
-assert_head vendor/extensions/coverflow-alt-tab 189ee9c5fcf5a2a84914fb337f4d53a705060532
+assert_head vendor/extensions/dash-to-panel db578c4f0061686609ed0bd1422967dfee2554d6
+assert_head vendor/extensions/blur-my-shell 19ce844b8ca36efe4a181b2cf81504063eb4ce4b
+assert_head vendor/extensions/coverflow-alt-tab 443f3ae98fc14598ed81e57c1b7f0ca15787b638
 assert_head vendor/extensions/clipboard-indicator c880c7fb88dc7232a61a5864d125989a4f375daa
-assert_head vendor/extensions/nextpinp b6d29fa278cd8e509d8521f578aebeed0864bfbb
+assert_head vendor/extensions/nextpinp 339692b689dffbafd4568b325bd2a1c518fbd38b
 
-assert_file_contains bluebuild/recipes/main.yml 'image-version: "44.20260902"'
+assert_file_contains bluebuild/recipes/main.yml 'image-version: "45.20261105"'
 assert_file_contains .github/workflows/build.yml 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
 assert_file_contains .github/workflows/pr-validate.yml 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1'
 assert_file_contains .github/workflows/build.yml 'blue-build/github-action@836161eb076426a451e6a0054f722b1153b8b3ad # v1.12.0'

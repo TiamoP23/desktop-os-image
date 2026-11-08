@@ -23,4 +23,4 @@ modules:
         destination: /usr/local/bin/install-devcontainers-extension.sh
   - type: containerfile
     snippets:
-      - RUN chmod +x /usr/local/bin/install-devcontainers-extension.sh /usr/local/bin/rounded_blur_build.sh && /usr/local/bin/install-devcontainers-extension.sh && rm -f /usr/local/bin/install-devcontainers-extension.sh
+      - RUN chmod +x /usr/local/bin/install-devcontainers-extension.sh && /usr/local/bin/install-devcontainers-extension.sh && rm -f /usr/local/bin/install-devcontainers-extension.sh

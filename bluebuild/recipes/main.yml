@@ -3,7 +3,8 @@
 name: desktop-os-image
 description: Personal Bazzite GNOME image with patched GNOME Shell extensions.
 base-image: ghcr.io/ublue-os/bazzite-gnome-nvidia
-image-version: "44.20260902"
+# Pinned Fedora 45 stable release; do not follow a moving channel.
+image-version: "45.20261105"
 
 modules:
   - from-file: desktop.yml

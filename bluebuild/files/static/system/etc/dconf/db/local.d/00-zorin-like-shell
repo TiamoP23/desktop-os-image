@@ -32,10 +32,13 @@ switcher-looping-method='Carousel'
 
 [org/gnome/shell/extensions/blur-my-shell]
 settings-version=2
+# v76 uses pipelines. Keep the legacy settings version for existing-user migration.
+# The applications pipeline preserves sigma=30 (radius=60) and brightness=0.9.
+pipelines={'pipeline_default': {'name': <'Default'>, 'effects': <[<{'type': <'dual_kawase_blur'>, 'id': <'effect_000000000000'>, 'params': <{'unscaled_radius': <30>, 'brightness': <0.6>}>}>]>}, 'pipeline_applications': {'name': <'Applications'>, 'effects': <[<{'type': <'dual_kawase_blur'>, 'id': <'effect_applications'>, 'params': <{'unscaled_radius': <60>, 'brightness': <0.9>}>}>]>}}
 
 [org/gnome/shell/extensions/blur-my-shell/applications]
 blur=true
-brightness=0.9
+pipeline='pipeline_applications'
 dynamic-opacity=false
 opacity=230
 whitelist=['org.gnome.*']

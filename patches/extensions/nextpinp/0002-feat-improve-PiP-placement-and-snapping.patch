@@ -1,4 +1,4 @@
-From d8022d6984315951dc1d469491dd402980556104 Mon Sep 17 00:00:00 2001
+From 9ee6d2c8e9da31d9d1bcbae9e65c46a959481903 Mon Sep 17 00:00:00 2001
 From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 22:31:56 +0200
 Subject: [PATCH 2/3] feat: improve PiP placement and snapping
@@ -379,4 +379,5 @@ index c0f65af..24aa6a4 100644
      }
  }
 -- 
-2.54.0
+2.55.0
+
