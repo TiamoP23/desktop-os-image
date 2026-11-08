@@ -2,31 +2,13 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-extension_file="${BLUR_MY_SHELL_SOURCE_FILE:-$script_dir/../bluebuild/files/generated/usr/share/gnome-shell/extensions/blur-my-shell@aunetx/components/panel.js}"
+source_dir="${BLUR_MY_SHELL_SOURCE_DIR:-$script_dir/../bluebuild/files/generated/usr/share/gnome-shell/extensions/blur-my-shell@aunetx}"
 
-require_source() {
-  local pattern="$1"
-  local description="$2"
-  if ! grep -Fq "$pattern" "$extension_file"; then
-    printf 'Missing Blur My Shell behavior: %s\n' "$description" >&2
-    exit 1
-  fi
-}
+# Exercise v76's geometry and reparenting behavior, not the removed local patches.
+gjs -m "$script_dir/test-blur-my-shell-takeover.js" "$source_dir" \
+  "$script_dir/../bluebuild/files/static/system/etc/dconf/db/local.d/00-zorin-like-shell"
 
-require_source 'find_panel_monitor(panel) {' 'central monitor resolver'
-require_source 'panel.get_parent()?.get_parent()?._dtpIndex' 'Dash to Panel panel-box monitor assignment'
-require_source 'Main.layoutManager.monitors[monitor_index]' 'assigned monitor lookup'
-require_source 'Main.layoutManager.findMonitorForActor(panel)' 'non-Dash-to-Panel fallback'
-
-if grep -Fq 'panel.get_parent()?._dtpIndex' "$extension_file"; then
-  printf 'Dash to Panel monitor lookup stops at the wrapper instead of the panel box\n' >&2
+if grep -Rq 'gi://Blur' "$source_dir"; then
+  echo 'Blur My Shell must not depend on the obsolete rounded-blur library' >&2
   exit 1
 fi
-
-resolver_calls="$(grep -Fc 'this.find_panel_monitor(panel)' "$extension_file")"
-if [[ "$resolver_calls" -ne 2 ]]; then
-  printf 'Expected two monitor resolver calls, found %s\n' "$resolver_calls" >&2
-  exit 1
-fi
-
-gjs -m "$script_dir/test-blur-my-shell-takeover.js" "$extension_file"

@@ -1,6 +1,6 @@
 # desktop-os-image
 
-Manifest-driven BlueBuild repository for a personal Bazzite GNOME 50 image.
+Manifest-driven BlueBuild repository for a personal Bazzite GNOME 51 image.
 
 ## Layout
 
@@ -15,7 +15,7 @@ Manifest-driven BlueBuild repository for a personal Bazzite GNOME 50 image.
 
 ## Image base
 
-The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:44.20260902` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository.
+The image builds from `ghcr.io/ublue-os/bazzite-gnome-nvidia:45.20261105` and layers the generated GNOME Shell extensions plus the existing desktop and DX customizations from this repository. This is the released **Fedora 45 stable** build (GNOME 51). See [upgrade notes and desktop checks](docs/fedora-45.md).
 
 ## Included extensions
 
@@ -31,7 +31,7 @@ The repository tracks upstream sources under `vendor/extensions/` and applies lo
 
 Use the `justfile` entrypoints:
 
-- Install the host-side prepare prerequisites first: `git`, `gettext`, `glib-compile-schemas`, `gnome-extensions`, `zip`, and `unzip`.
+- Install the host-side prepare prerequisites first: `git`, GNU `make`, `gettext`, `glib-compile-schemas`, `gnome-extensions`, `zip`, and `unzip`. The regression tests also require `gjs`.
 - `just setup` installs the git hook, syncs submodules, and prepares the generated tree.
 - `just prepare [component]` rerenders all components or a single component.
 - `just component-edit <component>` starts an edit session against a vendored component.
@@ -59,9 +59,9 @@ retesting same-UUID code changes on Wayland. Remove the user copy with
 `gnome-extensions uninstall nextpinp@leonid.nasedkin` before testing the copy
 shipped by an installed image, because user extensions override system ones.
 
-## Blur My Shell rounded blur helper
+## Blur My Shell rounded corners
 
-The upstream Blur My Shell guide is installed at `/usr/share/doc/blur-my-shell/GUIDE.md`, and the helper script is installed as `/usr/local/bin/rounded_blur_build.sh`.
+Blur My Shell v76 handles rounded blur internally. The image no longer builds the external `gnome-rounded-blur` library or installs its helper script. Both historical panel-blur patches are omitted so the new upstream geometry and reparenting behavior can be tested directly.
 
 ## Verification
 

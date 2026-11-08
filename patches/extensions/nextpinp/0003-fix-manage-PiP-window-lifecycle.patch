@@ -1,4 +1,4 @@
-From 98687c39c9944afcd95737abb9cca196b43b6a78 Mon Sep 17 00:00:00 2001
+From fcf7cd7bff4afbc8a4cb7d848848a68b61fdff65 Mon Sep 17 00:00:00 2001
 From: TiamoP23 <43099774+TiamoP23@users.noreply.github.com>
 Date: Thu, 10 Sep 2026 23:00:39 +0200
 Subject: [PATCH 3/3] fix: manage PiP window lifecycle
@@ -211,5 +211,5 @@ index 24aa6a4..e5961af 100644
      }
  }
 -- 
-2.54.0
+2.55.0
 

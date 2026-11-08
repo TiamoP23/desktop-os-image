@@ -41,6 +41,7 @@ jobs:
           bash ./scripts/test-component-pins.sh
           bash ./scripts/test-dash-to-panel-source.sh
           bash ./scripts/test-blur-my-shell-source.sh
+          bash ./scripts/test-clipboard-indicator-source.sh
           bash ./scripts/test-nextpinp-source.sh
           bash ./scripts/test-extension-metadata.sh
           bash ./scripts/test-render-determinism.sh

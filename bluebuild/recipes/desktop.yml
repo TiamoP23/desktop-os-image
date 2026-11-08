@@ -9,16 +9,8 @@ modules:
     files:
       - source: static/system/etc/dconf
         destination: /etc/dconf
-      - source: static/system/usr/share/doc/blur-my-shell
-        destination: /usr/share/doc/blur-my-shell
       - source: generated/usr/share/gnome-shell/extensions
         destination: /usr/share/gnome-shell/extensions
-      - source: static/scripts/rounded_blur_build.sh
-        destination: /usr/local/bin/rounded_blur_build.sh
   - type: containerfile
     snippets:
-      - RUN chmod +x /usr/local/bin/rounded_blur_build.sh
       - RUN dconf update
-      - RUN dnf --setopt=disable_excludes=* -y install git meson gcc pkgconf-pkg-config glib2-devel gobject-introspection-devel mutter-devel
-      - RUN SKIP_DEPS=y /usr/local/bin/rounded_blur_build.sh -i
-      - RUN dnf --setopt=disable_excludes=* -y remove git meson gcc glib2-devel gobject-introspection-devel mutter-devel && dnf -y clean all

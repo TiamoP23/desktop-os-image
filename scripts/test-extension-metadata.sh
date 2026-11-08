@@ -39,7 +39,7 @@ for uuid in sorted(expected_uuids):
         raise SystemExit(1)
 
     shell_versions = metadata.get("shell-version")
-    if not isinstance(shell_versions, list) or "50" not in shell_versions:
-        print(f"{metadata_path} does not declare GNOME Shell 50 support", file=sys.stderr)
+    if not isinstance(shell_versions, list) or "51" not in shell_versions:
+        print(f"{metadata_path} does not declare GNOME Shell 51 support", file=sys.stderr)
         raise SystemExit(1)
 PY

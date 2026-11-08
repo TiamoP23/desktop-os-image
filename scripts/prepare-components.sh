@@ -16,7 +16,7 @@ reset_generated_tree() {
   ensure_generated_tree
   rm -rf "$render_work_dir"
   mkdir -p "$render_work_dir"
-  find "$generated_dir" -mindepth 1 ! -name '.gitignore' -exec rm -rf {} +
+  find "$generated_dir" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -exec rm -rf {} +
 }
 
 render_current_component() {
